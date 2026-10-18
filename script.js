@@ -1,0 +1,364 @@
+/* ============ ADVANCED WATERPROOF TECHNOLOGY — site interactions ============ */
+
+/* ---- Editable price list (BDT per square foot). Update these to your real rates. ---- */
+const RATES = {
+  roof:     { standard: 45, premium: 70 },
+  wall:     { standard: 35, premium: 55 },
+  heat:     { standard: 50, premium: 75 },
+  basement: { standard: 80, premium: 120 },
+};
+
+const SERVICE_NAMES = {
+  roof: 'রুফ ওয়াটারপ্রুফিং',
+  wall: 'ওয়াল ড্যাম্প প্রুফিং',
+  heat: 'হিট প্রুফিং',
+  basement: 'বেসমেন্ট ওয়াটারপ্রুফিং',
+};
+
+const WHATSAPP_NUMBER = '8801724281865'; // 01724-281865
+
+/* ---------- pure helpers (testable) ---------- */
+
+function calculateEstimate(service, areaSqft, quality) {
+  const area = Number(areaSqft);
+  if (!RATES[service] || !RATES[service][quality] || !(area > 0)) return null;
+  return Math.round(area * RATES[service][quality]);
+}
+
+function formatBDT(amount) {
+  return '৳ ' + Number(amount).toLocaleString('en-IN');
+}
+
+function buildWhatsAppLink(number, message) {
+  return 'https://wa.me/' + number + '?text=' + encodeURIComponent(message);
+}
+
+function buildQuoteMessage(service, area, quality, amount) {
+  const qualityBn = quality === 'premium' ? 'প্রিমিয়াম' : 'স্ট্যান্ডার্ড';
+  return (
+    'আসসালামু আলাইকুম, আমি ওয়াটারপ্রুফিং সার্ভিসের জন্য খরচ জানতে চাই।\n' +
+    'সার্ভিস: ' + service + '\n' +
+    'এলাকা: ' + area + ' বর্গফুট\n' +
+    'উপকরণ: ' + qualityBn + '\n' +
+    'আনুমানিক খরচ: ' + formatBDT(amount)
+  );
+}
+
+function validateContact(name, phone) {
+  if (!String(name).trim()) return 'আপনার নাম লিখুন।';
+  if (!/^01[3-9]\d{8}$/.test(String(phone).trim())) return 'সঠিক ১১ সংখ্যার মোবাইল নম্বর দিন (01XXXXXXXXX)।';
+  return null;
+}
+
+function buildContactMessage(name, phone, service, message) {
+  let text = 'আসসালামু আলাইকুম, আমি ' + name.trim() + ' (' + phone.trim() + ')।\n';
+  text += 'সার্ভিস: ' + service + '\n';
+  if (String(message).trim()) text += 'বিস্তারিত: ' + message.trim();
+  return text;
+}
+
+/* ---------- DOM wiring ---------- */
+
+const $ = (id) => document.getElementById(id);
+
+function initMenu() {
+  const toggle = $('nav-toggle');
+  const menu = $('nav-menu');
+  if (!toggle || !menu) return;
+  const setOpen = (open) => {
+    menu.classList.toggle('open', open);
+    toggle.classList.toggle('open', open);
+    toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+  };
+  toggle.addEventListener('click', () => setOpen(!menu.classList.contains('open')));
+  menu.querySelectorAll('.nav-link').forEach((link) => {
+    link.addEventListener('click', () => setOpen(false));
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') setOpen(false);
+  });
+  return { setOpen };
+}
+
+function initNavbar() {
+  const navbar = $('navbar');
+  if (!navbar) return;
+  const onScroll = () => navbar.classList.toggle('scrolled', window.scrollY > 10);
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+}
+
+function initReveal() {
+  const els = document.querySelectorAll('.reveal');
+  if (!('IntersectionObserver' in window) || !els.length) {
+    els.forEach((el) => el.classList.add('visible'));
+    return;
+  }
+  const io = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          io.unobserve(entry.target);
+        }
+      });
+    },
+    { threshold: 0.12 }
+  );
+  els.forEach((el) => io.observe(el));
+}
+
+function initCalculator() {
+  const serviceEl = $('calc-service');
+  const areaEl = $('calc-area');
+  const qualityEl = $('calc-quality');
+  const btn = $('calc-btn');
+  const resultEl = $('calc-result');
+  const amountEl = $('calc-amount');
+  const waLink = $('calc-whatsapp');
+  if (!serviceEl || !areaEl || !qualityEl || !btn || !resultEl || !amountEl || !waLink) return;
+
+  btn.addEventListener('click', () => {
+    const service = serviceEl.value;
+    const area = areaEl.value;
+    const quality = qualityEl.value;
+    const amount = calculateEstimate(service, area, quality);
+    if (amount === null) {
+      amountEl.textContent = 'সঠিক তথ্য দিন';
+      resultEl.hidden = false;
+      return;
+    }
+    amountEl.textContent = formatBDT(amount);
+    waLink.href = buildWhatsAppLink(
+      WHATSAPP_NUMBER,
+      buildQuoteMessage(SERVICE_NAMES[service] || service, area, quality, amount)
+    );
+    resultEl.hidden = false;
+    resultEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  });
+}
+
+function initContactForm() {
+  const form = $('contact-form');
+  if (!form) return;
+  const nameEl = $('cf-name');
+  const phoneEl = $('cf-phone');
+  const serviceEl = $('cf-service');
+  const messageEl = $('cf-message');
+  const errorEl = $('form-error');
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const error = validateContact(nameEl.value, phoneEl.value);
+    if (error) {
+      errorEl.textContent = error;
+      errorEl.hidden = false;
+      return;
+    }
+    errorEl.hidden = true;
+    const link = buildWhatsAppLink(
+      WHATSAPP_NUMBER,
+      buildContactMessage(nameEl.value, phoneEl.value, serviceEl.value, messageEl.value)
+    );
+    window.open(link, '_blank', 'noopener');
+  });
+}
+
+function initYear() {
+  const yearEl = $('year');
+  if (yearEl) yearEl.textContent = String(new Date().getFullYear());
+}
+
+/* ---------- init ---------- */
+initMenu();
+initNavbar();
+initReveal();
+initCalculator();
+initContactForm();
+initYear();
+
+/* ================= Projects viewer + swipe gallery ================= */
+/* Shared helpers (uid, defaultProjects, parseImageLinks, stepIndex,
+   escapeHtml, guardImg, FALLBACK_IMG) come from projects.js */
+
+let projects = [];
+let lbImages = [];
+let lbIndex = 0;
+let lbTitle = '';
+
+/* Load the project list from the Cloudflare Worker API (D1 database).
+   Set your Worker URL in API_BASE (projects.js).
+   Falls back to built-in samples when the API is unreachable. */
+async function loadProjectsRemote() {
+  try {
+    const res = await fetch(API_BASE + '/api/projects', { cache: 'no-store' });
+    if (!res.ok) throw new Error('API error ' + res.status);
+    const data = await res.json();
+    projects = Array.isArray(data) ? data : defaultProjects();
+  } catch (err) {
+    projects = defaultProjects();
+  }
+  renderProjects();
+}
+
+function projectCardHTML(p) {
+  const images = Array.isArray(p.images) ? p.images : [];
+  const cover = images[0] || FALLBACK_IMG;
+  const badge =
+    p.status === 'ongoing'
+      ? '<span class="project-badge ongoing">🔨 চলমান</span>'
+      : '<span class="project-badge completed">✅ সম্পন্ন</span>';
+  return (
+    '<article class="project-card" data-id="' + escapeHtml(p.id) + '">' +
+      '<div class="project-cover">' +
+        '<img src="' + escapeHtml(cover) + '" alt="' + escapeHtml(p.title) + '" loading="lazy">' +
+        badge +
+      '</div>' +
+      '<div class="project-body">' +
+        '<h3>' + escapeHtml(p.title) + '</h3>' +
+        '<p class="project-loc">📍 ' + escapeHtml(p.location) + '</p>' +
+        '<p class="project-count">🖼️ ' + images.length + 'টি ছবি</p>' +
+        '<button type="button" class="btn btn-primary project-view" data-view="' + escapeHtml(p.id) + '">সব ছবি দেখুন</button>' +
+      '</div>' +
+    '</article>'
+  );
+}
+
+function renderProjects() {
+  renderCarousel('ongoing', $('pcar-ongoing'), $('empty-ongoing'));
+  renderCarousel('completed', $('pcar-completed'), $('empty-completed'));
+}
+
+function renderCarousel(status, track, emptyEl) {
+  if (!track) return;
+  const list = projects.filter((p) => p.status === status);
+  track.innerHTML = list.map(projectCardHTML).join('');
+  track.querySelectorAll('img').forEach(guardImg);
+  if (emptyEl) emptyEl.hidden = list.length > 0;
+}
+
+/* ---------- lightbox gallery ---------- */
+
+function openLightbox(project, startIndex) {
+  const lb = $('lightbox');
+  if (!lb || !project || !Array.isArray(project.images) || !project.images.length) return;
+  lbImages = project.images.slice();
+  lbTitle = project.title;
+  lbIndex = startIndex || 0;
+  lb.hidden = false;
+  void lb.offsetWidth; /* restart fade transition */
+  lb.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  const titleEl = $('lb-title');
+  if (titleEl) titleEl.textContent = lbTitle;
+  renderLbDots();
+  showLbImage(1);
+}
+
+function renderLbDots() {
+  const dots = $('lb-dots');
+  if (!dots) return;
+  dots.innerHTML = '';
+  lbImages.forEach((_, i) => {
+    const d = document.createElement('button');
+    d.type = 'button';
+    d.setAttribute('aria-label', 'ছবি ' + (i + 1));
+    d.addEventListener('click', () => {
+      const dir = i === lbIndex ? 0 : i > lbIndex ? 1 : -1;
+      lbIndex = i;
+      showLbImage(dir || 1);
+    });
+    dots.appendChild(d);
+  });
+}
+
+function showLbImage(dir) {
+  const img = $('lb-img');
+  if (!img || !lbImages.length) return;
+  img.classList.remove('slide-l', 'slide-r');
+  void img.offsetWidth; /* restart slide animation */
+  img.classList.add(dir < 0 ? 'slide-l' : 'slide-r');
+  guardImg(img);
+  img.src = lbImages[lbIndex];
+  img.alt = lbTitle + ' — ছবি ' + (lbIndex + 1);
+  const counter = $('lb-counter');
+  if (counter) counter.textContent = lbIndex + 1 + ' / ' + lbImages.length;
+  const dots = document.querySelectorAll('#lb-dots button');
+  dots.forEach((d, i) => d.classList.toggle('is-active', i === lbIndex));
+}
+
+function lbGo(dir) {
+  if (lbImages.length < 2) return;
+  lbIndex = stepIndex(lbIndex, lbImages.length, dir);
+  showLbImage(dir);
+}
+
+function closeLightbox() {
+  const lb = $('lightbox');
+  if (!lb) return;
+  lb.classList.remove('open');
+  document.body.style.overflow = '';
+  setTimeout(() => { lb.hidden = true; }, 300);
+  lbImages = [];
+}
+
+function initProjects() {
+  /* carousel arrow buttons: slide one card at a time */
+  document.querySelectorAll('.pcar-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const track = document.getElementById(btn.dataset.car);
+      if (!track) return;
+      const card = track.querySelector('.project-card');
+      const step = card ? card.offsetWidth + 20 : 320;
+      track.scrollBy({ left: step * Number(btn.dataset.dir), behavior: 'smooth' });
+    });
+  });
+
+  /* "view all photos" on any card, in either carousel */
+  ['pcar-ongoing', 'pcar-completed'].forEach((id) => {
+    const track = $(id);
+    if (track) {
+      track.addEventListener('click', (e) => {
+        const viewBtn = e.target.closest('[data-view]');
+        if (viewBtn) {
+          const p = projects.find((x) => String(x.id) === viewBtn.dataset.view);
+          if (p) openLightbox(p, 0);
+        }
+      });
+    }
+  });
+
+  const lb = $('lightbox');
+  if (lb) {
+    $('lb-close').addEventListener('click', closeLightbox);
+    $('lb-prev').addEventListener('click', () => lbGo(-1));
+    $('lb-next').addEventListener('click', () => lbGo(1));
+    lb.addEventListener('click', (e) => {
+      if (e.target === lb) closeLightbox();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (lb.hidden) return;
+      if (e.key === 'Escape') closeLightbox();
+      else if (e.key === 'ArrowLeft') lbGo(-1);
+      else if (e.key === 'ArrowRight') lbGo(1);
+    });
+
+    /* finger swipe */
+    const stage = $('lb-stage');
+    let touchX = null;
+    stage.addEventListener('touchstart', (e) => {
+      touchX = e.touches[0].clientX;
+    }, { passive: true });
+    stage.addEventListener('touchend', (e) => {
+      if (touchX === null) return;
+      const dx = e.changedTouches[0].clientX - touchX;
+      touchX = null;
+      if (Math.abs(dx) > 50) lbGo(dx < 0 ? 1 : -1);
+    }, { passive: true });
+  }
+
+  loadProjectsRemote();
+}
+
+/* ---------- init ---------- */
+initProjects();
