@@ -28,7 +28,7 @@ function isAdmin(request, env) {
 /* CORS: the website (Pages / any host) talks to this Worker cross-origin */
 function corsHeaders(request, env) {
   const headers = {
-    'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, x-admin-token',
     'Access-Control-Max-Age': '86400',
   };
@@ -54,6 +54,20 @@ function json(data, status, request, env) {
       corsHeaders(request, env)
     ),
   });
+}
+
+/* delete R2 objects that belong to this project (keys under projects/) */
+async function deleteOwnR2(env, urls) {
+  const base = String(env.R2_PUBLIC_URL || '').replace(/\/$/, '');
+  if (!base) return;
+  for (const url of urls || []) {
+    if (typeof url === 'string' && url.startsWith(base + '/')) {
+      const key = decodeURIComponent(url.slice(base.length + 1));
+      if (key.startsWith('projects/')) {
+        try { await env.R2.delete(key); } catch (e) { /* ignore */ }
+      }
+    }
+  }
 }
 
 function toPublic(row) {
@@ -121,19 +135,50 @@ async function handleDeleteProject(id, request, env) {
 
   await env.DB.prepare('DELETE FROM projects WHERE id = ?').bind(id).run();
 
-  /* delete this project's own R2 objects (never touch external URLs) */
-  const base = String(env.R2_PUBLIC_URL || '').replace(/\/$/, '');
-  if (base) {
-    for (const url of images) {
-      if (typeof url === 'string' && url.startsWith(base + '/')) {
-        const key = decodeURIComponent(url.slice(base.length + 1));
-        if (key.startsWith('projects/')) {
-          try { await env.R2.delete(key); } catch (e) { /* ignore */ }
-        }
-      }
-    }
-  }
+  await deleteOwnR2(env, images);
   return json({ ok: true }, 200, request, env);
+}
+
+/* PUT /api/projects/:id — edit title/location/status/images.
+   Removed images that live in our R2 bucket are deleted automatically. */
+async function handleUpdateProject(id, request, env) {
+  if (!isAdmin(request, env)) return json({ error: 'Unauthorized' }, 401, request, env);
+  let body;
+  try {
+    body = await request.json();
+  } catch (e) {
+    return json({ error: 'Invalid JSON' }, 400, request, env);
+  }
+  const title = String(body.title || '').trim();
+  const location = String(body.location || '').trim();
+  const status = body.status === 'completed' ? 'completed' : 'ongoing';
+  const images = Array.isArray(body.images)
+    ? body.images.map(String).map((s) => s.trim()).filter(Boolean).slice(0, 20)
+    : [];
+  if (!title || !location || !images.length) {
+    return json({ error: 'title, location and at least one image are required' }, 400, request, env);
+  }
+
+  const row = await env.DB.prepare('SELECT images FROM projects WHERE id = ?')
+    .bind(id)
+    .first();
+  if (!row) return json({ error: 'Not found' }, 404, request, env);
+  let oldImages = [];
+  try {
+    const parsed = JSON.parse(row.images || '[]');
+    if (Array.isArray(parsed)) oldImages = parsed;
+  } catch (e) { /* keep empty */ }
+
+  await env.DB.prepare(
+    'UPDATE projects SET title = ?, location = ?, status = ?, images = ? WHERE id = ?'
+  )
+    .bind(title, location, status, JSON.stringify(images), id)
+    .run();
+
+  const removed = oldImages.filter((u) => !images.includes(u));
+  await deleteOwnR2(env, removed);
+
+  return json({ id, title, location, status, images }, 200, request, env);
 }
 
 async function handleUpload(request, env) {
@@ -188,6 +233,9 @@ export default {
       const m = path.match(/^\/api\/projects\/([^/]+)$/);
       if (m && request.method === 'DELETE') {
         return await handleDeleteProject(decodeURIComponent(m[1]), request, env);
+      }
+      if (m && request.method === 'PUT') {
+        return await handleUpdateProject(decodeURIComponent(m[1]), request, env);
       }
       if (path === '/api/upload' && request.method === 'POST') {
         return await handleUpload(request, env);

@@ -40,6 +40,19 @@
     .badge.ongoing { background:#f59e0b; } .badge.completed { background:#10b981; }
     .del { border:none; background:#fef2f2; color:#dc2626; width:38px; height:38px; border-radius:10px; cursor:pointer; font-size:1.1rem; flex-shrink:0; }
     .del:hover { background:#fee2e2; }
+    .editbtn { border:none; background:#ecfeff; color:#0e7490; width:38px; height:38px; border-radius:10px; cursor:pointer; font-size:1.1rem; flex-shrink:0; }
+    .editbtn:hover { background:#cffafe; }
+    .pitem .actions { display:flex; gap:8px; flex-shrink:0; }
+    .pwrap { position:relative; display:inline-block; }
+    .pwrap .prm {
+      position:absolute; top:-8px; right:-8px; width:24px; height:24px; border-radius:50%;
+      border:none; background:#dc2626; color:#fff; font-size:.8rem; cursor:pointer; line-height:1;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .form-actions { display:flex; gap:10px; }
+    .form-actions .btn-primary { flex:1; }
+    .btn-cancel { background:#e5e9f0; color:var(--navy); padding:12px 22px; border-radius:999px; font-weight:600; font-size:1rem; font-family:inherit; border:none; cursor:pointer; }
+    .btn-cancel:hover { background:#d3dae6; }
     .preview { display:flex; gap:10px; flex-wrap:wrap; margin:2px 0 10px; }
     .preview img { width:72px; height:72px; object-fit:cover; border-radius:10px; border:2px solid var(--border); }
     .hint { font-size:.88rem; color:var(--muted); background:#f0fdfa; border:1px solid #99f6e4; border-radius:10px; padding:12px 14px; margin-bottom:14px; }
@@ -68,7 +81,7 @@
     <!-- Main panel -->
     <div id="admin-main" hidden>
       <div class="card">
-        <h2>＋ নতুন প্রজেক্ট যোগ করুন</h2>
+        <h2 id="form-title">＋ নতুন প্রজেক্ট যোগ করুন</h2>
         <form id="admin-form" novalidate>
           <div class="row">
             <label>প্রজেক্টের নাম *<input type="text" id="ad-title" maxlength="80" placeholder="যেমন: গুলশান রেসিডেন্স"></label>
@@ -89,7 +102,10 @@
           </label>
           <p class="error" id="ad-error" hidden></p>
           <p class="okmsg" id="ad-progress" hidden></p>
-          <button type="submit" class="btn btn-primary" id="btn-add">প্রজেক্ট যোগ করুন</button>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary" id="btn-add">প্রজেক্ট যোগ করুন</button>
+            <button type="button" class="btn-cancel" id="btn-cancel" hidden>বাতিল</button>
+          </div>
         </form>
       </div>
 
@@ -108,11 +124,13 @@
 
   <script src="projects.js"></script>
   <script>
-    /* Admin panel — talks to Cloudflare Pages Functions (/api/*).
+    /* Admin panel — talks to the Cloudflare Worker API (API_BASE + /api/*).
        Images -> R2 bucket, project data -> D1 database. */
     const TOKEN_KEY = 'awpt-admin-token';
     const $ = (id) => document.getElementById(id);
     let adminProjects = [];
+    let editingId = null;      /* id of project being edited, null = add mode */
+    let editExisting = [];     /* existing image URLs kept while editing */
 
     function getToken() {
       try { return localStorage.getItem(TOKEN_KEY) || ''; } catch (e) { return ''; }
@@ -166,6 +184,17 @@
       if (!res.ok) throw new Error('ডিলিট করা যায়নি');
     }
 
+    async function apiUpdateProject(id, payload) {
+      const res = await apiFetch('/api/projects/' + encodeURIComponent(id), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'আপডেট করা যায়নি');
+      return data;
+    }
+
     function renderAdmin() {
       const list = $('admin-list');
       $('pcount').textContent = adminProjects.length;
@@ -182,7 +211,10 @@
           '<img src="' + escapeHtml(cover) + '" alt="" loading="lazy">' +
           '<div class="meta"><strong>' + escapeHtml(p.title) + badge + '</strong>' +
           '<span>📍 ' + escapeHtml(p.location) + ' · 🖼️ ' + (p.images ? p.images.length : 0) + 'টি ছবি</span></div>' +
+          '<div class="actions">' +
+          '<button class="editbtn" data-edit="' + escapeHtml(p.id) + '" aria-label="এডিট">✏️</button>' +
           '<button class="del" data-del="' + escapeHtml(p.id) + '" aria-label="মুছুন">🗑️</button>' +
+          '</div>' +
           '</div>';
       }).join('');
       list.querySelectorAll('img').forEach(guardImg);
@@ -230,10 +262,11 @@
     });
 
     /* ---- image preview before upload ---- */
-    $('ad-files').addEventListener('change', (e) => {
+    $('ad-files').addEventListener('change', () => {
+      if (editingId) { renderEditPreview(); return; }
       const prev = $('file-preview');
       prev.innerHTML = '';
-      Array.from(e.target.files || []).slice(0, 20).forEach((f) => {
+      Array.from($('ad-files').files || []).slice(0, 20).forEach((f) => {
         const img = document.createElement('img');
         img.src = URL.createObjectURL(f);
         img.onload = () => URL.revokeObjectURL(img.src);
@@ -241,7 +274,70 @@
       });
     });
 
-    /* ---- add project ---- */
+    /* ---- edit mode ---- */
+    function renderEditPreview() {
+      const prev = $('file-preview');
+      prev.innerHTML = '';
+      editExisting.forEach((url, i) => {
+        const wrap = document.createElement('div');
+        wrap.className = 'pwrap';
+        const img = document.createElement('img');
+        img.src = url;
+        guardImg(img);
+        const x = document.createElement('button');
+        x.type = 'button'; x.className = 'prm'; x.textContent = '✕';
+        x.dataset.rmidx = i; x.setAttribute('aria-label', 'ছবি বাদ দিন');
+        wrap.appendChild(img); wrap.appendChild(x);
+        prev.appendChild(wrap);
+      });
+      Array.from($('ad-files').files || []).slice(0, 20).forEach((f) => {
+        const img = document.createElement('img');
+        img.src = URL.createObjectURL(f);
+        img.onload = () => URL.revokeObjectURL(img.src);
+        prev.appendChild(img);
+      });
+    }
+
+    function startEdit(id) {
+      const p = adminProjects.find((x) => String(x.id) === String(id));
+      if (!p) return;
+      editingId = p.id;
+      editExisting = Array.isArray(p.images) ? p.images.slice() : [];
+      $('ad-title').value = p.title || '';
+      $('ad-location').value = p.location || '';
+      $('ad-status').value = p.status === 'completed' ? 'completed' : 'ongoing';
+      $('ad-files').value = '';
+      $('ad-images').value = '';
+      $('ad-error').hidden = true; $('ad-progress').hidden = true;
+      renderEditPreview();
+      $('form-title').textContent = '✏️ প্রজেক্ট এডিট করুন';
+      $('btn-add').textContent = '💾 সেভ করো';
+      $('btn-cancel').hidden = false;
+      document.getElementById('admin-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function cancelEdit() {
+      editingId = null;
+      editExisting = [];
+      $('admin-form').reset();
+      $('file-preview').innerHTML = '';
+      $('ad-error').hidden = true; $('ad-progress').hidden = true;
+      $('form-title').textContent = '＋ নতুন প্রজেক্ট যোগ করুন';
+      $('btn-add').textContent = 'প্রজেক্ট যোগ করুন';
+      $('btn-cancel').hidden = true;
+    }
+
+    $('btn-cancel').addEventListener('click', cancelEdit);
+
+    /* remove an existing image while editing */
+    $('file-preview').addEventListener('click', (e) => {
+      const rm = e.target.closest('[data-rmidx]');
+      if (!rm) return;
+      editExisting.splice(Number(rm.dataset.rmidx), 1);
+      renderEditPreview();
+    });
+
+    /* ---- add / save project ---- */
     $('admin-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const title = $('ad-title').value.trim();
@@ -251,7 +347,8 @@
       const linkImages = parseImageLinks($('ad-images').value);
       if (!title) return showError('প্রজেক্টের নাম লিখুন।');
       if (!location) return showError('লোকেশন লিখুন।');
-      if (!files.length && !linkImages.length) return showError('কমপক্ষে একটি ছবি আপলোড করুন বা লিংক দিন।');
+      const existingCount = editingId ? editExisting.length : 0;
+      if (!files.length && !linkImages.length && !existingCount) return showError('কমপক্ষে একটি ছবি আপলোড করুন বা লিংক দিন।');
 
       const btn = $('btn-add');
       btn.disabled = true;
@@ -260,11 +357,19 @@
         if (files.length) {
           uploaded = await uploadFiles(files, (i, n) => showProgress('⏳ ছবি আপলোড হচ্ছে ' + i + '/' + n + '...'));
         }
+        const images = (editingId ? editExisting : []).concat(uploaded, linkImages);
+        if (!images.length) return showError('কমপক্ষে একটি ছবি রাখুন।');
         showProgress('⏳ প্রজেক্ট সেভ হচ্ছে...');
-        await apiCreateProject({ title, location, status, images: uploaded.concat(linkImages) });
-        e.target.reset();
-        $('file-preview').innerHTML = '';
-        showProgress('✅ প্রজেক্ট যোগ হয়েছে! ওয়েবসাইটে এখনই দেখা যাবে।');
+        if (editingId) {
+          await apiUpdateProject(editingId, { title, location, status, images });
+          cancelEdit();
+          showProgress('✅ প্রজেক্ট আপডেট হয়েছে! ওয়েবসাইটে এখনই দেখা যাবে।');
+        } else {
+          await apiCreateProject({ title, location, status, images });
+          e.target.reset();
+          $('file-preview').innerHTML = '';
+          showProgress('✅ প্রজেক্ট যোগ হয়েছে! ওয়েবসাইটে এখনই দেখা যাবে।');
+        }
         refreshList();
       } catch (err) {
         showError('❌ ' + err.message);
@@ -273,8 +378,10 @@
       }
     });
 
-    /* ---- delete ---- */
+    /* ---- edit + delete ---- */
     $('admin-list').addEventListener('click', async (e) => {
+      const editBtn = e.target.closest('[data-edit]');
+      if (editBtn) { startEdit(editBtn.dataset.edit); return; }
       const btn = e.target.closest('[data-del]');
       if (!btn) return;
       const p = adminProjects.find((x) => String(x.id) === btn.dataset.del);
