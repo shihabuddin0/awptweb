@@ -2,10 +2,10 @@
 
 /* ---- Editable price list (BDT per square foot). Update these to your real rates. ---- */
 const RATES = {
-  roof:     { standard: 45, premium: 70 },
-  wall:     { standard: 35, premium: 55 },
-  heat:     { standard: 50, premium: 75 },
-  basement: { standard: 80, premium: 120 },
+  roof:     { standard: 60, premium: 70 },
+  wall:     { standard: 25, premium: 35 },
+  heat:     { standard: 60, premium: 70 },
+  basement: { standard: 60, premium: 70 },
 };
 
 const SERVICE_NAMES = {
