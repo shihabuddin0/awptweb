@@ -332,6 +332,11 @@ function renderLbDots() {
   });
 }
 
+function setLbLoading(show) {
+  const l = $('lb-loading');
+  if (l) l.hidden = !show;
+}
+
 function showLbImage(dir) {
   const img = $('lb-img');
   if (!img || !lbImages.length) return;
@@ -339,12 +344,38 @@ function showLbImage(dir) {
   void img.offsetWidth; /* restart slide animation */
   img.classList.add(dir < 0 ? 'slide-l' : 'slide-r');
   guardImg(img);
-  img.src = lbImages[lbIndex];
+  const src = lbImages[lbIndex];
   img.alt = lbTitle + ' — ছবি ' + (lbIndex + 1);
   const counter = $('lb-counter');
   if (counter) counter.textContent = lbIndex + 1 + ' / ' + lbImages.length;
   const dots = document.querySelectorAll('#lb-dots button');
   dots.forEach((d, i) => d.classList.toggle('is-active', i === lbIndex));
+  /* load through a preloader: spinner until the NEW photo actually arrives,
+     so fast swipes never leave a stale photo on screen */
+  setLbLoading(true);
+  const apply = () => {
+    if (lbImages[lbIndex] === src) {
+      img.src = src;
+      setLbLoading(false);
+    }
+  };
+  try {
+    if (typeof Image === 'undefined') throw new Error('no Image');
+    const pre = new Image();
+    pre.onload = apply;
+    pre.onerror = apply;
+    pre.src = src;
+  } catch (e) { apply(); }
+  /* preload neighbours: the next swipe is instant */
+  [1, -1].forEach((d) => {
+    try {
+      const n = stepIndex(lbIndex, lbImages.length, d);
+      if (n !== lbIndex && typeof Image !== 'undefined') {
+        const im = new Image();
+        im.src = lbImages[n];
+      }
+    } catch (e) {}
+  });
 }
 
 function lbGo(dir) {
@@ -356,6 +387,7 @@ function lbGo(dir) {
 function closeLightbox() {
   const lb = $('lightbox');
   if (!lb) return;
+  setLbLoading(false);
   lb.classList.remove('open');
   document.body.style.overflow = '';
   setTimeout(() => { lb.hidden = true; }, 300);
