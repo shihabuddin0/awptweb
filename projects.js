@@ -5,7 +5,7 @@
 /* ⬇️⬇️⬇️ এখানে তোমার Worker URL বসাও (deploy এর পর পাবে) ⬇️⬇️⬇️
    Example: 'https://awpt-api.tomar-account.workers.dev'
    NOTE: শেষে / থাকবে না, /api অংশও দেবে না — শুধু Worker URL. */
-const API_BASE = 'https://PASTE-YOUR-WORKER-URL-HERE.workers.dev';
+const API_BASE = 'https://base.sf-shihabuddin0.workers.dev';
 
 const PROJECTS_KEY = 'awpt-projects-v1';
 
