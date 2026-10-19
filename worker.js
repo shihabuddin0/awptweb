@@ -212,6 +212,49 @@ async function handleUpload(request, env) {
   return json({ url, key }, 201, request, env);
 }
 
+/* ---- site settings (editable section headings) ---- */
+const DEFAULT_SETTINGS = {
+  ongoing_title: '🔨 চলমান প্রজেক্ট',
+  completed_title: '✅ সম্পন্ন প্রজেক্ট',
+};
+const SETTING_KEYS = Object.keys(DEFAULT_SETTINGS);
+
+async function ensureSettingsTable(env) {
+  await env.DB.prepare(
+    'CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)'
+  ).run();
+}
+
+async function handleGetSettings(request, env) {
+  const out = Object.assign({}, DEFAULT_SETTINGS);
+  try {
+    const { results } = await env.DB.prepare('SELECT key, value FROM settings').all();
+    for (const row of results || []) {
+      if (SETTING_KEYS.includes(row.key) && typeof row.value === 'string') out[row.key] = row.value;
+    }
+  } catch (e) { /* table missing -> defaults */ }
+  return json(out, 200, request, env);
+}
+
+async function handlePutSettings(request, env) {
+  if (!isAdmin(request, env)) return json({ error: 'Unauthorized' }, 401, request, env);
+  let body;
+  try {
+    body = await request.json();
+  } catch (e) {
+    return json({ error: 'Invalid JSON' }, 400, request, env);
+  }
+  await ensureSettingsTable(env);
+  for (const k of SETTING_KEYS) {
+    if (typeof body[k] === 'string' && body[k].trim()) {
+      await env.DB.prepare(
+        'INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value'
+      ).bind(k, body[k].trim().slice(0, 60)).run();
+    }
+  }
+  return await handleGetSettings(request, env);
+}
+
 export default {
   async fetch(request, env) {
     /* CORS preflight */
@@ -239,6 +282,12 @@ export default {
       }
       if (path === '/api/upload' && request.method === 'POST') {
         return await handleUpload(request, env);
+      }
+      if (path === '/api/settings' && request.method === 'GET') {
+        return await handleGetSettings(request, env);
+      }
+      if (path === '/api/settings' && request.method === 'PUT') {
+        return await handlePutSettings(request, env);
       }
       return json({ error: 'Not found' }, 404, request, env);
     } catch (err) {

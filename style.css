@@ -235,6 +235,16 @@ a { text-decoration: none; color: inherit; }
 .footer-brand strong { color: #fff; letter-spacing: 0.5px; }
 .footer-brand p { font-size: 0.88rem; }
 .footer-contact p { font-size: 0.92rem; }
+.footer-social { display: flex; align-items: center; gap: 10px; }
+.soc {
+  width: 44px; height: 44px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,.12); transition: transform .2s, background .2s; flex-shrink: 0;
+}
+.soc svg { width: 20px; height: 20px; fill: #fff; }
+.soc:hover { transform: translateY(-3px); }
+.soc-fb:hover { background: #1877f2; }
+.soc-yt:hover { background: #ff0000; }
+.soc-handle { color: #a5f3fc; font-size: .9rem; font-weight: 600; }
 .footer-bottom { border-top: 1px solid rgba(255, 255, 255, 0.12); text-align: center; padding: 16px 20px; font-size: 0.85rem; }
 
 /* ---------- Floating call ---------- */
@@ -302,7 +312,11 @@ a { text-decoration: none; color: inherit; }
 .pcar-wrap { margin-bottom: 46px; }
 .pcar-wrap:last-of-type { margin-bottom: 6px; }
 .pcar-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
-.pcar-head h3 { color: var(--navy); font-size: 1.35rem; }
+.pcar-head h3 { color: var(--navy); font-size: 1.35rem; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.pcar-count {
+  font-size: .85rem; font-weight: 700; color: #fff; background: linear-gradient(135deg, var(--cyan), #0284c7);
+  padding: 3px 14px; border-radius: 999px; white-space: nowrap; box-shadow: 0 4px 10px rgba(6,182,212,.35);
+}
 .pcar-nav { display: flex; gap: 8px; flex-shrink: 0; }
 .pcar-btn {
   width: 44px; height: 44px; border-radius: 50%; border: 2px solid var(--border);

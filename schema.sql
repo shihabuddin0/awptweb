@@ -8,3 +8,9 @@ CREATE TABLE IF NOT EXISTS projects (
   created_at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_projects_created ON projects (created_at DESC);
+
+-- Site settings (editable section headings etc. from admin panel)
+CREATE TABLE IF NOT EXISTS settings (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL
+);

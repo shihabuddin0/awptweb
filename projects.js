@@ -5,9 +5,14 @@
 /* ⬇️⬇️⬇️ এখানে তোমার Worker URL বসাও (deploy এর পর পাবে) ⬇️⬇️⬇️
    Example: 'https://awpt-api.tomar-account.workers.dev'
    NOTE: শেষে / থাকবে না, /api অংশও দেবে না — শুধু Worker URL. */
-const API_BASE = 'https://base.sf-shihabuddin0.workers.dev';
+const API_BASE = 'https://PASTE-YOUR-WORKER-URL-HERE.workers.dev';
 
 const PROJECTS_KEY = 'awpt-projects-v1';
+
+/* Latin digits -> Bengali digits (for count badges etc.) */
+function toBn(num) {
+  return String(num).replace(/[0-9]/g, (d) => '০১২৩৪৫৬৭৮৯'[Number(d)]);
+}
 
 const FALLBACK_IMG =
   'data:image/svg+xml;charset=UTF-8,' +

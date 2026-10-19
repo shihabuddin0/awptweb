@@ -225,16 +225,29 @@ function projectCardHTML(p) {
 }
 
 function renderProjects() {
-  renderCarousel('ongoing', $('pcar-ongoing'), $('empty-ongoing'));
-  renderCarousel('completed', $('pcar-completed'), $('empty-completed'));
+  renderCarousel('ongoing', $('pcar-ongoing'), $('empty-ongoing'), $('pcount-ongoing'));
+  renderCarousel('completed', $('pcar-completed'), $('empty-completed'), $('pcount-completed'));
 }
 
-function renderCarousel(status, track, emptyEl) {
+function renderCarousel(status, track, emptyEl, badgeEl) {
   if (!track) return;
   const list = projects.filter((p) => p.status === status);
   track.innerHTML = list.map(projectCardHTML).join('');
   track.querySelectorAll('img').forEach(guardImg);
   if (emptyEl) emptyEl.hidden = list.length > 0;
+  if (badgeEl) badgeEl.textContent = toBn(list.length) + 'টি';
+}
+
+/* Section headings (চলমান/সম্পন্ন) are editable from the admin panel.
+   Falls back to the built-in defaults when the API is unreachable. */
+async function loadSettingsRemote() {
+  try {
+    const res = await fetch(API_BASE + '/api/settings', { cache: 'no-store' });
+    if (!res.ok) return;
+    const s = await res.json();
+    if (s.ongoing_title && $('ptitle-ongoing')) $('ptitle-ongoing').textContent = s.ongoing_title;
+    if (s.completed_title && $('ptitle-completed')) $('ptitle-completed').textContent = s.completed_title;
+  } catch (e) { /* keep defaults */ }
 }
 
 /* ---------- lightbox gallery ---------- */
@@ -358,6 +371,7 @@ function initProjects() {
   }
 
   loadProjectsRemote();
+  loadSettingsRemote();
 }
 
 /* ---------- init ---------- */

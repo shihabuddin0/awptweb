@@ -116,6 +116,20 @@
       </div>
 
       <div class="card">
+        <h2>⚙️ হেডিং সেটিংস</h2>
+        <p class="hint">ওয়েবসাইটের প্রজেক্ট সেকশনের হেডিং এখান থেকে বদলাতে পারবেন।</p>
+        <label>🔨 চলমান প্রজেক্টের হেডিং
+          <input type="text" id="set-ongoing" maxlength="60" placeholder="🔨 চলমান প্রজেক্ট">
+        </label>
+        <label>✅ সম্পন্ন প্রজেক্টের হেডিং
+          <input type="text" id="set-completed" maxlength="60" placeholder="✅ সম্পন্ন প্রজেক্ট">
+        </label>
+        <p class="error" id="settings-error" hidden></p>
+        <p class="okmsg" id="settings-msg" hidden></p>
+        <button class="btn btn-primary" id="btn-settings" type="button" style="width:auto">💾 হেডিং সেভ করো</button>
+      </div>
+
+      <div class="card">
         <h2>💾 ব্যাকআপ</h2>
         <button class="btn btn-dl" id="btn-backup" type="button">⬇️ প্রজেক্টের ব্যাকআপ ডাউনলোড</button>
       </div>
@@ -253,6 +267,7 @@
         $('token-card').hidden = true;
         $('admin-main').hidden = false;
         refreshList();
+        loadSettings();
       } catch (err) {
         setToken('');
         try { localStorage.removeItem(TOKEN_KEY); } catch (e) {}
@@ -392,6 +407,45 @@
       } catch (err) {
         const m = $('list-msg');
         m.textContent = '❌ ' + err.message; m.hidden = false;
+      }
+    });
+
+    /* ---- heading settings ---- */
+    async function loadSettings() {
+      try {
+        const res = await apiFetch('/api/settings');
+        if (!res.ok) return;
+        const s = await res.json();
+        if (s.ongoing_title) $('set-ongoing').value = s.ongoing_title;
+        if (s.completed_title) $('set-completed').value = s.completed_title;
+      } catch (e) { /* keep placeholders */ }
+    }
+
+    $('btn-settings').addEventListener('click', async () => {
+      const errEl = $('settings-error'), okEl = $('settings-msg');
+      errEl.hidden = true; okEl.hidden = true;
+      const btn = $('btn-settings');
+      btn.disabled = true;
+      try {
+        const res = await apiFetch('/api/settings', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ongoing_title: $('set-ongoing').value,
+            completed_title: $('set-completed').value,
+          }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || 'সেভ করা যায়নি');
+        if (data.ongoing_title) $('set-ongoing').value = data.ongoing_title;
+        if (data.completed_title) $('set-completed').value = data.completed_title;
+        okEl.textContent = '✅ হেডিং সেভ হয়েছে! ওয়েবসাইটে এখনই দেখা যাবে।';
+        okEl.hidden = false;
+      } catch (err) {
+        errEl.textContent = '❌ ' + err.message;
+        errEl.hidden = false;
+      } finally {
+        btn.disabled = false;
       }
     });
 
