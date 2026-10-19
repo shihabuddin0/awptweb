@@ -247,6 +247,11 @@ async function loadSettingsRemote() {
     const s = await res.json();
     if (s.ongoing_title && $('ptitle-ongoing')) $('ptitle-ongoing').textContent = s.ongoing_title;
     if (s.completed_title && $('ptitle-completed')) $('ptitle-completed').textContent = s.completed_title;
+    for (let i = 1; i <= 4; i++) {
+      const vEl = $('stat' + i + '-value'), lEl = $('stat' + i + '-label');
+      if (s['stat' + i + '_value'] && vEl) vEl.textContent = s['stat' + i + '_value'];
+      if (s['stat' + i + '_label'] && lEl) lEl.textContent = s['stat' + i + '_label'];
+    }
   } catch (e) { /* keep defaults */ }
 }
 

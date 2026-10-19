@@ -57,6 +57,9 @@
     .preview img { width:72px; height:72px; object-fit:cover; border-radius:10px; border:2px solid var(--border); }
     .hint { font-size:.88rem; color:var(--muted); background:#f0fdfa; border:1px solid #99f6e4; border-radius:10px; padding:12px 14px; margin-bottom:14px; }
     .empty { text-align:center; color:var(--muted); padding:20px; }
+    .sep { border:none; border-top:1px solid var(--border); margin:20px 0 16px; }
+    .sub-h { color:var(--navy); font-size:1.05rem; margin-bottom:12px; }
+    .stat-edit-row { display:grid; grid-template-columns:110px 1fr; gap:10px; margin-bottom:10px; }
     @media (max-width:560px){ .row{grid-template-columns:1fr;} }
   </style>
 </head>
@@ -124,6 +127,24 @@
         <label>✅ সম্পন্ন প্রজেক্টের হেডিং
           <input type="text" id="set-completed" maxlength="60" placeholder="✅ সম্পন্ন প্রজেক্ট">
         </label>
+        <hr class="sep">
+        <h3 class="sub-h">📊 পরিসংখ্যান</h3>
+        <div class="stat-edit-row">
+          <input type="text" id="set-stat1-value" maxlength="12" placeholder="500+">
+          <input type="text" id="set-stat1-label" maxlength="40" placeholder="সম্পন্ন প্রজেক্ট">
+        </div>
+        <div class="stat-edit-row">
+          <input type="text" id="set-stat2-value" maxlength="12" placeholder="100%">
+          <input type="text" id="set-stat2-label" maxlength="40" placeholder="সন্তুষ্ট গ্রাহক">
+        </div>
+        <div class="stat-edit-row">
+          <input type="text" id="set-stat3-value" maxlength="12" placeholder="10+">
+          <input type="text" id="set-stat3-label" maxlength="40" placeholder="বছরের অভিজ্ঞ টিম">
+        </div>
+        <div class="stat-edit-row">
+          <input type="text" id="set-stat4-value" maxlength="12" placeholder="25+">
+          <input type="text" id="set-stat4-label" maxlength="40" placeholder="বছরের ওয়ারেন্টি">
+        </div>
         <p class="error" id="settings-error" hidden></p>
         <p class="okmsg" id="settings-msg" hidden></p>
         <button class="btn btn-primary" id="btn-settings" type="button" style="width:auto">💾 হেডিং সেভ করো</button>
@@ -410,14 +431,20 @@
       }
     });
 
-    /* ---- heading settings ---- */
+    /* ---- site settings (headings + stats) ---- */
+    const SETTING_INPUTS = [
+      ['ongoing_title', 'set-ongoing'], ['completed_title', 'set-completed'],
+      ['stat1_value', 'set-stat1-value'], ['stat1_label', 'set-stat1-label'],
+      ['stat2_value', 'set-stat2-value'], ['stat2_label', 'set-stat2-label'],
+      ['stat3_value', 'set-stat3-value'], ['stat3_label', 'set-stat3-label'],
+      ['stat4_value', 'set-stat4-value'], ['stat4_label', 'set-stat4-label'],
+    ];
     async function loadSettings() {
       try {
         const res = await apiFetch('/api/settings');
         if (!res.ok) return;
         const s = await res.json();
-        if (s.ongoing_title) $('set-ongoing').value = s.ongoing_title;
-        if (s.completed_title) $('set-completed').value = s.completed_title;
+        SETTING_INPUTS.forEach(([k, id]) => { if (s[k]) $(id).value = s[k]; });
       } catch (e) { /* keep placeholders */ }
     }
 
@@ -427,19 +454,17 @@
       const btn = $('btn-settings');
       btn.disabled = true;
       try {
+        const payload = {};
+        SETTING_INPUTS.forEach(([k, id]) => { payload[k] = $(id).value; });
         const res = await apiFetch('/api/settings', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            ongoing_title: $('set-ongoing').value,
-            completed_title: $('set-completed').value,
-          }),
+          body: JSON.stringify(payload),
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.error || 'সেভ করা যায়নি');
-        if (data.ongoing_title) $('set-ongoing').value = data.ongoing_title;
-        if (data.completed_title) $('set-completed').value = data.completed_title;
-        okEl.textContent = '✅ হেডিং সেভ হয়েছে! ওয়েবসাইটে এখনই দেখা যাবে।';
+        SETTING_INPUTS.forEach(([k, id]) => { if (data[k]) $(id).value = data[k]; });
+        okEl.textContent = '✅ সেভ হয়েছে! ওয়েবসাইটে এখনই দেখা যাবে।';
         okEl.hidden = false;
       } catch (err) {
         errEl.textContent = '❌ ' + err.message;
