@@ -126,12 +126,8 @@ a { text-decoration: none; color: inherit; }
 .hero-points { display: flex; gap: 22px; justify-content: center; flex-wrap: wrap; color: #a5f3fc; font-size: 0.95rem; }
 
 /* ---------- Stats (icon cards) ---------- */
-.stats { background: #fff; padding: 72px 0; }
-.stats-panel {
-  background: #e9f4fe; border: 1px solid #d3e8fb; border-radius: 28px;
-  padding: 32px; box-shadow: 0 24px 60px rgba(10,31,68,.10);
-}
-.stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 26px; }
+.stats { background: #fff; padding: 72px 5%; }
+.stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 26px; max-width: 1140px; margin: 0 auto; }
 .stat-card {
   background: #fff; border-radius: 20px; overflow: hidden;
   display: flex; align-items: stretch; min-height: 148px;
@@ -297,8 +293,7 @@ a { text-decoration: none; color: inherit; }
 }
 
 @media (max-width: 640px) {
-  .stats { padding: 48px 0; }
-  .stats-panel { padding: 16px; border-radius: 22px; }
+  .stats { padding: 48px 5%; }
   .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .stat-card { min-height: 110px; border-radius: 16px; }
   .stat-icon { flex-basis: 38%; border-radius: 16px 58% 58% 16px / 16px 50% 50% 16px; }

@@ -266,7 +266,7 @@ function animateCount(el) {
 
 function initStatCountUp() {
   if (!('IntersectionObserver' in window)) return;
-  const panel = document.querySelector('.stats-panel');
+  const panel = document.querySelector('.stats-grid');
   if (!panel) return;
   const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const io = new IntersectionObserver((entries) => {
