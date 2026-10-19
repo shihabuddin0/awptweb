@@ -345,6 +345,20 @@ a { text-decoration: none; color: inherit; }
 .vframe-holder iframe { position: absolute; inset: 0; width: 100% !important; height: 100% !important; border: 0; }
 /* transparent shield: no click ever reaches YouTube's UI */
 .vblock { position: absolute; inset: 0; z-index: 2; }
+/* loading spinner while the video starts / buffers */
+.vloading {
+  position: absolute; inset: 0; z-index: 2;
+  background: rgba(4,12,28,.55);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+  color: #fff; font-size: .95rem; font-weight: 600;
+}
+.vloading[hidden] { display: none; }
+.vspinner {
+  width: 44px; height: 44px; border-radius: 50%;
+  border: 4px solid rgba(255,255,255,.25); border-top-color: var(--cyan);
+  animation: vspin .8s linear infinite;
+}
+@keyframes vspin { to { transform: rotate(360deg); } }
 /* custom replay covers YouTube's end screen */
 .vreplay {
   position: absolute; inset: 0; z-index: 3; border: none; cursor: pointer;

@@ -490,6 +490,11 @@ function fmtTime(sec) {
   return Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0');
 }
 
+function setLoading(show) {
+  const l = $('vloading');
+  if (l) l.hidden = !show;
+}
+
 function setPPBtn(playing) {
   const b = $('vpp');
   if (b) { b.textContent = playing ? '⏸' : '▶'; b.setAttribute('aria-label', playing ? 'থামান' : 'চালান'); }
@@ -518,12 +523,17 @@ function onPlayerState(e) {
   const st = e && e.data;
   const replay = $('vreplay');
   if (st === 1) { /* playing */
+    setLoading(false);
     setPPBtn(true);
     if (replay) replay.hidden = true;
     startSeekTimer(); updateSeek();
   } else if (st === 2) { /* paused */
+    setLoading(false);
     setPPBtn(false); stopSeekTimer(); updateSeek();
+  } else if (st === 3) { /* buffering */
+    setLoading(true);
   } else if (st === 0) { /* ended: show OUR replay, never YouTube's end screen */
+    setLoading(false);
     setPPBtn(false); stopSeekTimer(); updateSeek();
     if (replay) replay.hidden = false;
   }
@@ -531,6 +541,7 @@ function onPlayerState(e) {
 
 function closePlayerOnly() {
   stopSeekTimer();
+  setLoading(false);
   try { if (ytPlayer && ytPlayer.destroy) ytPlayer.destroy(); } catch (e) {}
   ytPlayer = null;
   const holder = $('vframe-holder');
@@ -545,6 +556,7 @@ async function openVideo(id, title) {
   $('vplayer-title').textContent = '▶ ' + (title || 'ভিডিও');
   const replay = $('vreplay');
   if (replay) replay.hidden = true;
+  setLoading(true);
   setPPBtn(false);
   const seek = $('vseek');
   if (seek) seek.value = 0;
@@ -563,6 +575,8 @@ async function openVideo(id, title) {
       holder.innerHTML = '<iframe title="ইউটিউব ভিডিও" frameborder="0" ' +
         'allow="accelerometer; autoplay; encrypted-media; picture-in-picture" ' +
         'src="https://www.youtube.com/embed/' + encodeURIComponent(id) + '?autoplay=1&rel=0&controls=0&disablekb=1&fs=0"></iframe>';
+      const fr = holder.querySelector('iframe');
+      if (fr) fr.addEventListener('load', () => setLoading(false));
     }
     return;
   }
