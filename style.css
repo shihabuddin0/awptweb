@@ -298,10 +298,14 @@ a { text-decoration: none; color: inherit; }
 
 @media (max-width: 640px) {
   .stats { padding: 48px 0; }
-  .stats-panel { padding: 20px; border-radius: 22px; }
-  .stats-grid { grid-template-columns: 1fr; gap: 16px; }
-  .stat-card { min-height: 128px; }
-  .stat-text strong { font-size: 2.1rem; }
+  .stats-panel { padding: 16px; border-radius: 22px; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .stat-card { min-height: 110px; border-radius: 16px; }
+  .stat-icon { flex-basis: 38%; border-radius: 16px 58% 58% 16px / 16px 50% 50% 16px; }
+  .stat-icon svg { width: 38px; height: 38px; }
+  .stat-text { padding: 12px 10px; }
+  .stat-text strong { font-size: 1.45rem; letter-spacing: 0; }
+  .stat-text span { font-size: 0.75rem; margin-top: 4px; line-height: 1.4; }
 }
 
 @media (max-width: 768px) {
