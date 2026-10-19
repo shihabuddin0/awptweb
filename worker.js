@@ -221,6 +221,7 @@ const DEFAULT_SETTINGS = {
   stat3_value: '25+', stat3_label: 'বছরের ওয়ারেন্টি',
   stat4_value: '10+', stat4_label: 'বছরের অভিজ্ঞ টিম',
   yt_channel: 'https://www.youtube.com/@awptbd',
+  yt_channel_id: '',
 };
 const SETTING_KEYS = Object.keys(DEFAULT_SETTINGS);
 
@@ -297,16 +298,40 @@ function parseRss(xml) {
   return videos;
 }
 
+async function getSetting(env, key) {
+  try {
+    const row = await env.DB.prepare('SELECT value FROM settings WHERE key = ?').bind(key).first();
+    return row && row.value ? row.value : '';
+  } catch (e) { return ''; }
+}
+
+async function saveSetting(env, key, value) {
+  try {
+    await env.DB.prepare('CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)').run();
+    await env.DB.prepare(
+      'INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value'
+    ).bind(key, value).run();
+  } catch (e) { /* ignore */ }
+}
+
 async function handleGetVideos(request, env) {
   try {
-    let channelUrl = DEFAULT_SETTINGS.yt_channel;
-    try {
-      const row = await env.DB.prepare("SELECT value FROM settings WHERE key = 'yt_channel'").first();
-      if (row && row.value) channelUrl = row.value;
-    } catch (e) { /* settings table missing -> default */ }
+    /* 1. prefer a saved channel ID (set from admin or auto-saved) */
+    let channelId = '';
+    const savedId = await getSetting(env, 'yt_channel_id');
+    if (/^UC[A-Za-z0-9_-]{22}$/.test(savedId)) channelId = savedId;
 
-    /* serve from cache when fresh */
-    const cacheKey = 'https://awpt-video-cache/videos?c=' + encodeURIComponent(channelUrl);
+    /* 2. otherwise resolve from the channel URL and remember it */
+    let channelUrl = DEFAULT_SETTINGS.yt_channel;
+    if (!channelId) {
+      const fromSettings = await getSetting(env, 'yt_channel');
+      if (fromSettings) channelUrl = fromSettings;
+      channelId = await resolveChannelId(channelUrl);
+      await saveSetting(env, 'yt_channel_id', channelId);
+    }
+
+    /* 3. serve from cache when fresh */
+    const cacheKey = 'https://awpt-video-cache/videos?c=' + encodeURIComponent(channelId);
     try {
       if (typeof caches !== 'undefined') {
         const hit = await caches.default.match(cacheKey);
@@ -314,11 +339,18 @@ async function handleGetVideos(request, env) {
       }
     } catch (e) { /* ignore cache errors */ }
 
-    const channelId = await resolveChannelId(channelUrl);
-    const rss = await (await fetch(
-      'https://www.youtube.com/feeds/videos.xml?channel_id=' + channelId,
-      { headers: { 'User-Agent': YT_UA } }
-    )).text();
+    /* 4. fetch RSS with retries (YouTube sometimes 500s) */
+    let rss = '';
+    for (let attempt = 0; attempt < 3 && !rss; attempt++) {
+      try {
+        const r = await fetch(
+          'https://www.youtube.com/feeds/videos.xml?channel_id=' + channelId,
+          { headers: { 'User-Agent': YT_UA } }
+        );
+        if (r.ok) rss = await r.text();
+      } catch (e) { /* retry */ }
+    }
+    if (!rss) return json([], 200, request, env);
     const videos = parseRss(rss);
 
     const res = json(videos, 200, request, env);

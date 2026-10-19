@@ -150,6 +150,9 @@
         <label>চ্যানেল লিংক <small>(ভিডিও গ্যালারি এই চ্যানেল থেকে আসবে)</small>
           <input type="text" id="set-yt-channel" maxlength="120" placeholder="https://www.youtube.com/@awptbd">
         </label>
+        <label>চ্যানেল ID <small>(লিংক থেকে না পেলে এখানে সরাসরি দিন — তোমারটা: UCoSc0ehF1nDNJ72WdrI_05w)</small>
+          <input type="text" id="set-yt-channel-id" maxlength="40" placeholder="UCoSc0ehF1nDNJ72WdrI_05w">
+        </label>
         <p class="error" id="settings-error" hidden></p>
         <p class="okmsg" id="settings-msg" hidden></p>
         <button class="btn btn-primary" id="btn-settings" type="button" style="width:auto">💾 হেডিং সেভ করো</button>
@@ -444,6 +447,7 @@
       ['stat3_value', 'set-stat3-value'], ['stat3_label', 'set-stat3-label'],
       ['stat4_value', 'set-stat4-value'], ['stat4_label', 'set-stat4-label'],
       ['yt_channel', 'set-yt-channel'],
+      ['yt_channel_id', 'set-yt-channel-id'],
     ];
     async function loadSettings() {
       try {
