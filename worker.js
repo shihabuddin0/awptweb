@@ -220,6 +220,7 @@ const DEFAULT_SETTINGS = {
   stat2_value: '100%', stat2_label: 'সন্তুষ্ট গ্রাহক',
   stat3_value: '25+', stat3_label: 'বছরের ওয়ারেন্টি',
   stat4_value: '10+', stat4_label: 'বছরের অভিজ্ঞ টিম',
+  yt_channel: 'https://www.youtube.com/@awptbd',
 };
 const SETTING_KEYS = Object.keys(DEFAULT_SETTINGS);
 
@@ -259,6 +260,82 @@ async function handlePutSettings(request, env) {
   return await handleGetSettings(request, env);
 }
 
+/* ---- YouTube channel videos (no API key: public RSS feed) ---- */
+const YT_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36';
+
+function decodeXml(s) {
+  return String(s || '')
+    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&#x27;/g, "'");
+}
+
+async function resolveChannelId(channelUrl) {
+  let m = String(channelUrl || '').match(/youtube\.com\/channel\/(UC[\w-]{22})/);
+  if (m) return m[1];
+  const html = await (await fetch(channelUrl, { headers: { 'User-Agent': YT_UA } })).text();
+  m = html.match(/"channelId":"(UC[\w-]{22})"/)
+    || html.match(/<link rel="canonical" href="https:\/\/www\.youtube\.com\/channel\/(UC[\w-]{22})"/);
+  if (m) return m[1] || m[2];
+  throw new Error('channel not found');
+}
+
+function parseRss(xml) {
+  const videos = [];
+  const entries = String(xml || '').match(/<entry>[\s\S]*?<\/entry>/g) || [];
+  for (const e of entries.slice(0, 20)) {
+    const id = (e.match(/<yt:videoId>([^<]+)<\/yt:videoId>/) || [])[1];
+    if (!id) continue;
+    const title = (e.match(/<title>([^<]*)<\/title>/) || [])[1];
+    const published = (e.match(/<published>([^<]+)<\/published>/) || [])[1];
+    videos.push({
+      id: id.trim(),
+      title: decodeXml(title || 'Untitled').trim() || 'Untitled',
+      published: (published || '').trim(),
+      thumb: 'https://i.ytimg.com/vi/' + id.trim() + '/hqdefault.jpg',
+    });
+  }
+  return videos;
+}
+
+async function handleGetVideos(request, env) {
+  try {
+    let channelUrl = DEFAULT_SETTINGS.yt_channel;
+    try {
+      const row = await env.DB.prepare("SELECT value FROM settings WHERE key = 'yt_channel'").first();
+      if (row && row.value) channelUrl = row.value;
+    } catch (e) { /* settings table missing -> default */ }
+
+    /* serve from cache when fresh */
+    const cacheKey = 'https://awpt-video-cache/videos?c=' + encodeURIComponent(channelUrl);
+    try {
+      if (typeof caches !== 'undefined') {
+        const hit = await caches.default.match(cacheKey);
+        if (hit) return json(await hit.json(), 200, request, env);
+      }
+    } catch (e) { /* ignore cache errors */ }
+
+    const channelId = await resolveChannelId(channelUrl);
+    const rss = await (await fetch(
+      'https://www.youtube.com/feeds/videos.xml?channel_id=' + channelId,
+      { headers: { 'User-Agent': YT_UA } }
+    )).text();
+    const videos = parseRss(rss);
+
+    const res = json(videos, 200, request, env);
+    try {
+      if (typeof caches !== 'undefined' && videos.length) {
+        const toCache = new Response(JSON.stringify(videos), {
+          headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=3600' },
+        });
+        await caches.default.put(cacheKey, toCache);
+      }
+    } catch (e) { /* ignore cache errors */ }
+    return res;
+  } catch (err) {
+    return json([], 200, request, env);
+  }
+}
+
 export default {
   async fetch(request, env) {
     /* CORS preflight */
@@ -292,6 +369,9 @@ export default {
       }
       if (path === '/api/settings' && request.method === 'PUT') {
         return await handlePutSettings(request, env);
+      }
+      if (path === '/api/videos' && request.method === 'GET') {
+        return await handleGetVideos(request, env);
       }
       return json({ error: 'Not found' }, 404, request, env);
     } catch (err) {

@@ -422,5 +422,108 @@ function initProjects() {
   initStatCountUp();
 }
 
+/* ---------- YouTube videos ---------- */
+function videoCardHTML(v) {
+  let dateStr = '';
+  if (v.published) {
+    const d = new Date(v.published);
+    if (!isNaN(d)) {
+      try { dateStr = d.toLocaleDateString('bn-BD', { year: 'numeric', month: 'long', day: 'numeric' }); }
+      catch (e) { dateStr = v.published.slice(0, 10); }
+    }
+  }
+  return '<button type="button" class="vcard" data-video="' + escapeHtml(v.id) +
+    '" data-vtitle="' + escapeHtml(v.title) + '">' +
+    '<span class="vthumb"><img src="' + escapeHtml(v.thumb) + '" alt="" loading="lazy">' +
+    '<span class="vplay"></span></span>' +
+    '<span class="vtitle">' + escapeHtml(v.title) + '</span>' +
+    (dateStr ? '<span class="vdate">' + escapeHtml(dateStr) + '</span>' : '') +
+    '</button>';
+}
+
+function renderVideos(list) {
+  const track = $('vcarousel');
+  if (!track) return;
+  track.innerHTML = list.map(videoCardHTML).join('');
+  track.querySelectorAll('img').forEach(guardImg);
+}
+
+async function loadVideos() {
+  const sec = $('videos');
+  if (!sec) return;
+  try {
+    const res = await fetch(API_BASE + '/api/videos', { cache: 'no-store' });
+    if (!res.ok) return;
+    const list = await res.json();
+    if (!Array.isArray(list) || !list.length) return;
+    renderVideos(list);
+    sec.hidden = false;
+  } catch (e) { /* section stays hidden */ }
+}
+
+let vdx = 0, vdy = 0;
+function openVideo(id, title) {
+  const modal = $('vmodal'), player = $('vplayer');
+  if (!modal || !player || !id) return;
+  $('vframe').src = 'https://www.youtube.com/embed/' + encodeURIComponent(id) + '?autoplay=1&rel=0';
+  $('vplayer-title').textContent = '▶ ' + (title || 'ভিডিও');
+  vdx = 0; vdy = 0;
+  player.style.transform = '';
+  modal.hidden = false;
+  document.body.style.overflow = 'hidden';
+}
+function closeVideo() {
+  const modal = $('vmodal');
+  if (!modal) return;
+  const fr = $('vframe');
+  if (fr) fr.src = '';
+  modal.hidden = true;
+  document.body.style.overflow = '';
+}
+
+function initVideos() {
+  const track = $('vcarousel');
+  if (track) {
+    track.addEventListener('click', (e) => {
+      const card = e.target.closest('[data-video]');
+      if (card) openVideo(card.dataset.video, card.dataset.vtitle);
+    });
+  }
+  const modal = $('vmodal');
+  if (modal) {
+    const closeBtn = $('vclose');
+    if (closeBtn) closeBtn.addEventListener('click', closeVideo);
+    const bg = modal.querySelector('[data-vclose]');
+    if (bg) bg.addEventListener('click', closeVideo);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !modal.hidden) closeVideo();
+    });
+  }
+  /* drag the player around by its header */
+  const player = $('vplayer'), head = $('vplayer-head');
+  if (player && head) {
+    let dragging = false, sx = 0, sy = 0;
+    head.addEventListener('pointerdown', (e) => {
+      dragging = true; sx = e.clientX - vdx; sy = e.clientY - vdy;
+      try { head.setPointerCapture(e.pointerId); } catch (err) {}
+    });
+    head.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      const w = player.offsetWidth || 300, h = player.offsetHeight || 200;
+      const vw = window.innerWidth, vh = window.innerHeight;
+      let nx = e.clientX - sx, ny = e.clientY - sy;
+      nx = Math.max(-(w - 90) - (vw - w) / 2, Math.min((vw - 90) - (vw - w) / 2, nx));
+      ny = Math.max(-(h - 70) - (vh - h) / 2, Math.min((vh - 70) - (vh - h) / 2, ny));
+      vdx = nx; vdy = ny;
+      player.style.transform = 'translate(' + nx + 'px,' + ny + 'px)';
+    });
+    const stop = () => { dragging = false; };
+    head.addEventListener('pointerup', stop);
+    head.addEventListener('pointercancel', stop);
+  }
+}
+
 /* ---------- init ---------- */
 initProjects();
+initVideos();
+loadVideos();

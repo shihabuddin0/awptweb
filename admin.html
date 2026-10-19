@@ -145,6 +145,11 @@
           <input type="text" id="set-stat4-value" maxlength="12" placeholder="10+">
           <input type="text" id="set-stat4-label" maxlength="40" placeholder="বছরের অভিজ্ঞ টিম">
         </div>
+        <hr class="sep">
+        <h3 class="sub-h">🎬 ইউটিউব চ্যানেল</h3>
+        <label>চ্যানেল লিংক <small>(ভিডিও গ্যালারি এই চ্যানেল থেকে আসবে)</small>
+          <input type="text" id="set-yt-channel" maxlength="120" placeholder="https://www.youtube.com/@awptbd">
+        </label>
         <p class="error" id="settings-error" hidden></p>
         <p class="okmsg" id="settings-msg" hidden></p>
         <button class="btn btn-primary" id="btn-settings" type="button" style="width:auto">💾 হেডিং সেভ করো</button>
@@ -438,6 +443,7 @@
       ['stat2_value', 'set-stat2-value'], ['stat2_label', 'set-stat2-label'],
       ['stat3_value', 'set-stat3-value'], ['stat3_label', 'set-stat3-label'],
       ['stat4_value', 'set-stat4-value'], ['stat4_label', 'set-stat4-label'],
+      ['yt_channel', 'set-yt-channel'],
     ];
     async function loadSettings() {
       try {

@@ -204,6 +204,35 @@
       </div>
     </section>
 
+    <!-- ===== Videos ===== -->
+    <section class="section videos-sec" id="videos" hidden>
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="section-tag">ভিডিও গ্যালারি</span>
+          <h2>🎬 আমাদের ভিডিও</h2>
+          <p>ইউটিউব চ্যানেলের সর্বশেষ ভিডিওসমূহ — পছন্দের ভিডিওতে ক্লিক করলেই পপআপে চলবে।</p>
+        </div>
+      </div>
+      <div class="vcarousel reveal" id="vcarousel"></div>
+      <p class="empty-projects" id="empty-videos" hidden>এখনো কোনো ভিডিও পাওয়া যায়নি।</p>
+    </section>
+
+    <!-- ===== Video popup player (draggable) ===== -->
+    <div class="vmodal" id="vmodal" hidden>
+      <div class="vmodal-bg" data-vclose></div>
+      <div class="vplayer" id="vplayer" role="dialog" aria-label="ভিডিও প্লেয়ার">
+        <div class="vplayer-head" id="vplayer-head">
+          <span class="vplayer-title" id="vplayer-title">▶ ভিডিও</span>
+          <button type="button" class="vclose" id="vclose" aria-label="বন্ধ করুন">✕</button>
+        </div>
+        <div class="vframe">
+          <iframe id="vframe" title="ইউটিউব ভিডিও" frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen></iframe>
+        </div>
+      </div>
+    </div>
+
     <!-- ===== Why us ===== -->
     <section class="section section-alt" id="why">
       <div class="container">
