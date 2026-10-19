@@ -464,21 +464,128 @@ async function loadVideos() {
 }
 
 let vdx = 0, vdy = 0;
-function openVideo(id, title) {
+let ytPlayer = null, ytApiPromise = null, seekTimer = null, currentVideoId = '';
+
+/* Load the YouTube IFrame API once (lets us hide ALL YouTube UI) */
+function ensureYTApi() {
+  if (ytApiPromise) return ytApiPromise;
+  ytApiPromise = new Promise((resolve) => {
+    if (window.YT && window.YT.Player) { resolve(true); return; }
+    let done = false;
+    const finish = (ok) => { if (!done) { done = true; resolve(ok); } };
+    try {
+      window.onYouTubeIframeAPIReady = () => finish(true);
+      const s = document.createElement('script');
+      s.src = 'https://www.youtube.com/iframe_api';
+      s.onerror = () => finish(false);
+      document.head.appendChild(s);
+    } catch (e) { finish(false); return; }
+    setTimeout(() => finish(!!(window.YT && window.YT.Player)), 8000);
+  });
+  return ytApiPromise;
+}
+
+function fmtTime(sec) {
+  sec = Math.max(0, Math.floor(sec || 0));
+  return Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0');
+}
+
+function setPPBtn(playing) {
+  const b = $('vpp');
+  if (b) { b.textContent = playing ? '⏸' : '▶'; b.setAttribute('aria-label', playing ? 'থামান' : 'চালান'); }
+}
+
+function updateSeek() {
+  if (!ytPlayer || !ytPlayer.getDuration) return;
+  let dur = 0, cur = 0;
+  try { dur = ytPlayer.getDuration() || 0; cur = ytPlayer.getCurrentTime() || 0; } catch (e) {}
+  const seek = $('vseek'), time = $('vtime');
+  if (seek && dur > 0 && document.activeElement !== seek) {
+    seek.value = Math.round((cur / dur) * 1000);
+  }
+  if (time) time.textContent = fmtTime(cur) + ' / ' + fmtTime(dur);
+}
+
+function startSeekTimer() {
+  stopSeekTimer();
+  seekTimer = setInterval(updateSeek, 500);
+}
+function stopSeekTimer() {
+  if (seekTimer) { clearInterval(seekTimer); seekTimer = null; }
+}
+
+function onPlayerState(e) {
+  const st = e && e.data;
+  const replay = $('vreplay');
+  if (st === 1) { /* playing */
+    setPPBtn(true);
+    if (replay) replay.hidden = true;
+    startSeekTimer(); updateSeek();
+  } else if (st === 2) { /* paused */
+    setPPBtn(false); stopSeekTimer(); updateSeek();
+  } else if (st === 0) { /* ended: show OUR replay, never YouTube's end screen */
+    setPPBtn(false); stopSeekTimer(); updateSeek();
+    if (replay) replay.hidden = false;
+  }
+}
+
+function closePlayerOnly() {
+  stopSeekTimer();
+  try { if (ytPlayer && ytPlayer.destroy) ytPlayer.destroy(); } catch (e) {}
+  ytPlayer = null;
+  const holder = $('vframe-holder');
+  if (holder) holder.innerHTML = '<div id="vframe"></div>';
+}
+
+async function openVideo(id, title) {
   const modal = $('vmodal'), player = $('vplayer');
   if (!modal || !player || !id) return;
-  $('vframe').src = 'https://www.youtube.com/embed/' + encodeURIComponent(id) + '?autoplay=1&rel=0';
+  closePlayerOnly();
+  currentVideoId = id;
   $('vplayer-title').textContent = '▶ ' + (title || 'ভিডিও');
+  const replay = $('vreplay');
+  if (replay) replay.hidden = true;
+  setPPBtn(false);
+  const seek = $('vseek');
+  if (seek) seek.value = 0;
+  const time = $('vtime');
+  if (time) time.textContent = '0:00 / 0:00';
   vdx = 0; vdy = 0;
   player.style.transform = '';
   modal.hidden = false;
   document.body.style.overflow = 'hidden';
+
+  const ok = await ensureYTApi();
+  if (!ok || modal.hidden || currentVideoId !== id || !window.YT || !window.YT.Player) {
+    /* fallback: plain chromeless embed */
+    const holder = $('vframe-holder');
+    if (holder && !modal.hidden && currentVideoId === id) {
+      holder.innerHTML = '<iframe title="ইউটিউব ভিডিও" frameborder="0" ' +
+        'allow="accelerometer; autoplay; encrypted-media; picture-in-picture" ' +
+        'src="https://www.youtube.com/embed/' + encodeURIComponent(id) + '?autoplay=1&rel=0&controls=0&disablekb=1&fs=0"></iframe>';
+    }
+    return;
+  }
+  try {
+    ytPlayer = new window.YT.Player('vframe', {
+      videoId: id,
+      playerVars: {
+        autoplay: 1, controls: 0, disablekb: 1, fs: 0,
+        iv_load_policy: 3, modestbranding: 1, rel: 0, playsinline: 1,
+      },
+      events: {
+        onReady: (ev) => { try { ev.target.playVideo(); } catch (e) {} updateSeek(); },
+        onStateChange: onPlayerState,
+      },
+    });
+  } catch (e) { ytPlayer = null; }
 }
+
 function closeVideo() {
   const modal = $('vmodal');
   if (!modal) return;
-  const fr = $('vframe');
-  if (fr) fr.src = '';
+  closePlayerOnly();
+  currentVideoId = '';
   modal.hidden = true;
   document.body.style.overflow = '';
 }
@@ -501,6 +608,37 @@ function initVideos() {
       if (e.key === 'Escape' && !modal.hidden) closeVideo();
     });
   }
+  /* custom play/pause */
+  const pp = $('vpp');
+  if (pp) pp.addEventListener('click', () => {
+    if (!ytPlayer) return;
+    try {
+      if (ytPlayer.getPlayerState() === 1) ytPlayer.pauseVideo();
+      else ytPlayer.playVideo();
+    } catch (e) {}
+  });
+  /* custom seek bar */
+  const seek = $('vseek');
+  if (seek) {
+    const doSeek = () => {
+      if (!ytPlayer || !ytPlayer.getDuration) return;
+      try {
+        const dur = ytPlayer.getDuration() || 0;
+        if (dur > 0) ytPlayer.seekTo((Number(seek.value) / 1000) * dur, true);
+      } catch (e) {}
+      updateSeek();
+    };
+    seek.addEventListener('input', doSeek);
+    seek.addEventListener('change', doSeek);
+  }
+  /* custom replay (instead of YouTube's end screen) */
+  const replay = $('vreplay');
+  if (replay) replay.addEventListener('click', () => {
+    replay.hidden = true;
+    if (ytPlayer) {
+      try { ytPlayer.seekTo(0, true); ytPlayer.playVideo(); } catch (e) {}
+    }
+  });
   /* drag the player around by its header */
   const player = $('vplayer'), head = $('vplayer-head');
   if (player && head) {

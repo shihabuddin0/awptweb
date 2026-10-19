@@ -217,7 +217,7 @@
       <p class="empty-projects" id="empty-videos" hidden>এখনো কোনো ভিডিও পাওয়া যায়নি।</p>
     </section>
 
-    <!-- ===== Video popup player (draggable) ===== -->
+    <!-- ===== Video popup player (draggable, chromeless) ===== -->
     <div class="vmodal" id="vmodal" hidden>
       <div class="vmodal-bg" data-vclose></div>
       <div class="vplayer" id="vplayer" role="dialog" aria-label="ভিডিও প্লেয়ার">
@@ -226,9 +226,14 @@
           <button type="button" class="vclose" id="vclose" aria-label="বন্ধ করুন">✕</button>
         </div>
         <div class="vframe">
-          <iframe id="vframe" title="ইউটিউব ভিডিও" frameborder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowfullscreen></iframe>
+          <div class="vframe-holder" id="vframe-holder"><div id="vframe"></div></div>
+          <div class="vblock" aria-hidden="true"></div>
+          <button type="button" class="vreplay" id="vreplay" hidden>↻ আবার দেখুন</button>
+        </div>
+        <div class="vcontrols">
+          <button type="button" class="vpp" id="vpp" aria-label="চালান">▶</button>
+          <input type="range" class="vseek" id="vseek" min="0" max="1000" value="0" step="1" aria-label="ভিডিও এগিয়ে-পিছিয়ে নিন">
+          <span class="vtime" id="vtime">0:00 / 0:00</span>
         </div>
       </div>
     </div>
