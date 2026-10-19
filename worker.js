@@ -264,38 +264,103 @@ async function handlePutSettings(request, env) {
 /* ---- YouTube channel videos (no API key: public RSS feed) ---- */
 const YT_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36';
 
-function decodeXml(s) {
-  return String(s || '')
-    .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&#x27;/g, "'");
+function extractInitialData(html) {
+  const key = 'var ytInitialData = ';
+  const i = String(html || '').indexOf(key);
+  if (i < 0) return null;
+  let j = i + key.length;
+  while (j < html.length && (html[j] === ' ' || html[j] === '\n' || html[j] === '\r' || html[j] === '\t')) j++;
+  if (html[j] !== '{') return null;
+  let depth = 0, inStr = false, esc = false;
+  for (let k = j; k < html.length; k++) {
+    const c = html[k];
+    if (inStr) {
+      if (esc) esc = false;
+      else if (c === '\\') esc = true;
+      else if (c === '"') inStr = false;
+    } else if (c === '"') inStr = true;
+    else if (c === '{') depth++;
+    else if (c === '}') { depth--; if (depth === 0) return html.slice(j, k + 1); }
+  }
+  return null;
+}
+
+function findKey(obj, key, out) {
+  out = out || [];
+  if (Array.isArray(obj)) {
+    for (const v of obj) findKey(v, key, out);
+  } else if (obj && typeof obj === 'object') {
+    const keys = Object.keys(obj);
+    for (let n = 0; n < keys.length; n++) {
+      if (keys[n] === key) out.push(obj[keys[n]]);
+      findKey(obj[keys[n]], key, out);
+    }
+  }
+  return out;
+}
+
+/* Parse videos from a YouTube channel /videos page (no API key) */
+function parseChannelVideos(html) {
+  const videos = [];
+  try {
+    const raw = extractInitialData(html);
+    if (!raw) return videos;
+    const data = JSON.parse(raw);
+    const grids = findKey(data, 'richGridRenderer');
+    for (const g of grids) {
+      const items = (g && g.contents) || [];
+      for (const it of items) {
+        const rir = (it || {}).richItemRenderer || {};
+        const lvm = (rir.content || {}).lockupViewModel || {};
+        const id = lvm.contentId || '';
+        if (!/^[A-Za-z0-9_-]{11}$/.test(id)) continue;
+        if (videos.some((v) => v.id === id)) continue;
+        let title = '', published = '';
+        try {
+          const vm = lvm.metadata.lockupMetadataViewModel || {};
+          title = (vm.title && vm.title.content) || '';
+          const rows = ((vm.metadata || {}).contentMetadataViewModel || {}).metadataRows || [];
+          for (const row of rows) {
+            for (const part of row.metadataParts || []) {
+              const label = part.accessibilityLabel || '';
+              if (/ago$/.test(label)) published = label;
+            }
+          }
+        } catch (e) { /* keep going */ }
+        videos.push({
+          id: id,
+          title: String(title || 'Untitled'),
+          published: published,
+          thumb: 'https://i.ytimg.com/vi/' + id + '/hqdefault.jpg',
+        });
+        if (videos.length >= 20) return videos;
+      }
+    }
+  } catch (e) { /* fall through */ }
+  return videos;
 }
 
 async function resolveChannelId(channelUrl) {
-  let m = String(channelUrl || '').match(/youtube\.com\/channel\/(UC[\w-]{22})/);
-  if (m) return m[1];
+  const m0 = String(channelUrl || '').match(/youtube\.com\/channel\/(UC[\w-]{22})/);
+  if (m0) return m0[1];
   const html = await (await fetch(channelUrl, { headers: { 'User-Agent': YT_UA } })).text();
-  m = html.match(/"channelId":"(UC[\w-]{22})"/)
+  const m = html.match(/"channelId":"(UC[\w-]{22})"/)
     || html.match(/<link rel="canonical" href="https:\/\/www\.youtube\.com\/channel\/(UC[\w-]{22})"/);
   if (m) return m[1] || m[2];
   throw new Error('channel not found');
 }
 
-function parseRss(xml) {
-  const videos = [];
-  const entries = String(xml || '').match(/<entry>[\s\S]*?<\/entry>/g) || [];
-  for (const e of entries.slice(0, 20)) {
-    const id = (e.match(/<yt:videoId>([^<]+)<\/yt:videoId>/) || [])[1];
-    if (!id) continue;
-    const title = (e.match(/<title>([^<]*)<\/title>/) || [])[1];
-    const published = (e.match(/<published>([^<]+)<\/published>/) || [])[1];
-    videos.push({
-      id: id.trim(),
-      title: decodeXml(title || 'Untitled').trim() || 'Untitled',
-      published: (published || '').trim(),
-      thumb: 'https://i.ytimg.com/vi/' + id.trim() + '/hqdefault.jpg',
-    });
+async function fetchChannelVideos(channelId) {
+  const url = 'https://www.youtube.com/channel/' + channelId + '/videos';
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const r = await fetch(url, { headers: { 'User-Agent': YT_UA } });
+      if (!r.ok) continue;
+      const videos = parseChannelVideos(await r.text());
+      if (videos.length) return videos;
+    } catch (e) { /* retry */ }
   }
-  return videos;
+  return [];
 }
 
 async function getSetting(env, key) {
@@ -339,19 +404,8 @@ async function handleGetVideos(request, env) {
       }
     } catch (e) { /* ignore cache errors */ }
 
-    /* 4. fetch RSS with retries (YouTube sometimes 500s) */
-    let rss = '';
-    for (let attempt = 0; attempt < 3 && !rss; attempt++) {
-      try {
-        const r = await fetch(
-          'https://www.youtube.com/feeds/videos.xml?channel_id=' + channelId,
-          { headers: { 'User-Agent': YT_UA } }
-        );
-        if (r.ok) rss = await r.text();
-      } catch (e) { /* retry */ }
-    }
-    if (!rss) return json([], 200, request, env);
-    const videos = parseRss(rss);
+    /* 4. fetch videos from the channel page (no API key needed) */
+    const videos = await fetchChannelVideos(channelId);
 
     const res = json(videos, 200, request, env);
     try {

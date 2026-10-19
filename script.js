@@ -430,6 +430,8 @@ function videoCardHTML(v) {
     if (!isNaN(d)) {
       try { dateStr = d.toLocaleDateString('bn-BD', { year: 'numeric', month: 'long', day: 'numeric' }); }
       catch (e) { dateStr = v.published.slice(0, 10); }
+    } else {
+      dateStr = v.published; /* relative label like "3 days ago" */
     }
   }
   return '<button type="button" class="vcard" data-video="' + escapeHtml(v.id) +
