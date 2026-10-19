@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quotation - Advanced Waterproof Technology Dr Abu Sayeed Rahman</title>
+
+<style>
+    /* Reset and General Setup */
+    body {
+        font-family: "Times New Roman", Times, serif;
+        background-color: #525659;
+        margin: 0;
+        padding: 20px;
+        color: #111;
+        display: flex;
+        flex-direction: column;
+        align-items: center; 
+    }
+
+    /* --- Control Panel --- */
+    .control-panel {
+        background-color: #3b3f42;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 25px;
+        width: 100%; 
+        max-width: 210mm;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    }
+
+    .control-panel label {
+        color: #ffffff;
+        font-size: 15px;
+        font-weight: bold;
+        margin-bottom: -5px;
+    }
+
+    .control-panel textarea, .control-panel input, .control-panel select {
+        width: 100%;
+        padding: 10px;
+        font-size: 15px;
+        font-family: inherit;
+        border-radius: 5px;
+        border: 1px solid #777;
+        box-sizing: border-box;
+        background-color: #fff;
+    }
+    
+    .control-panel textarea { resize: vertical; }
+
+    /* Download Button */
+    .download-btn {
+        background-color: #0f4c81;
+        color: #ffffff;
+        border: none;
+        padding: 12px 25px;
+        font-size: 16px;
+        font-weight: bold;
+        border-radius: 5px;
+        cursor: pointer;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        transition: background-color 0.3s;
+        margin-top: 10px;
+    }
+    
+    .download-btn:hover { background-color: #082d4f; }
+
+    /* Document Wrapper */
+    .document-wrapper {
+        width: 100%;
+        max-width: 100vw;
+        overflow-x: auto;
+        display: flex;
+        flex-direction: column; 
+        align-items: center;
+        gap: 25px; 
+        padding-bottom: 20px;
+    }
+
+    /* Exact A4 Document Layout */
+    .document {
+        background-color: #fff;
+        width: 210mm; 
+        min-width: 210mm;
+        height: 297mm; 
+        padding: 15mm 10mm; 
+        box-sizing: border-box;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+        position: relative;
+    }
+
+    /* ================= PAGE 1 STYLES ================= */
+    .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; }
+    .logo-container { text-align: center; width: 180px; }
+    .logo-img { width: 100px; height: 70px; object-fit: contain; display: block; margin: 0 auto; }
+    .logo-text { font-size: 8px; font-weight: bold; margin: 5px 0 0; color: #123e70; text-transform: uppercase; letter-spacing: 0.5px; }
+    .company-info { border: 1px solid #333; padding: 8px 12px; font-size: 13.5px; line-height: 1.4; width: 370px; box-sizing: border-box; }
+    .meta-data { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px; font-size: 14.5px; }
+    .recipient { line-height: 1.5; width: 55%; margin-top: 0; padding-top: 0; }
+    .quotation-details { line-height: 1.6; width: 40%; margin-top: 0; padding-top: 0; }
+    .subject { font-weight: bold; font-size: 15px; margin-bottom: 25px; }
+    .body-text { font-size: 14.5px; line-height: 1.6; text-align: justify; }
+    .body-text p { margin-bottom: 18px; }
+    .terms-section { margin-top: 25px; }
+    .terms-section h3 { font-size: 15px; text-decoration: underline; margin-bottom: 18px; }
+    .terms-list { padding-left: 0; list-style-type: none; counter-reset: list-counter; margin-bottom: 0; }
+    .terms-list li { position: relative; padding-left: 50px; margin-bottom: 15px; text-align: justify; font-size: 14.5px; line-height: 1.6; }
+    .terms-list li::before { content: counter(list-counter) "."; counter-increment: list-counter; position: absolute; left: 25px; font-weight: bold; }
+    .footer { margin-top: 40px; text-align: center; font-weight: bold; font-size: 16px; }
+
+    /* ================= PAGE 2 STYLES ================= */
+    .quote-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-family: "Times New Roman", Times, serif;
+        font-size: 14.5px;
+        margin-top: 10px;
+    }
+    .quote-table th, .quote-table td {
+        border: 1px solid #000;
+        padding: 5px;
+        vertical-align: middle;
+    }
+    .quote-table .bg-purple { background-color: #835c9e; color: #000; font-weight: bold; }
+    .quote-table .bg-yellow { background-color: #ffff00; font-weight: bold; }
+    .quote-table .text-red { color: #d92424; font-weight: bold; font-size: 17px; text-align: center; }
+    
+    .inner-sub-row {
+        border-top: 1px solid #000;
+        padding: 5px 5px 5px 10px; 
+        text-align: left; 
+        font-size: 13.5px;
+        margin: 5px -5px -5px -5px; 
+    }
+
+    /* Print Setup */
+    @media print {
+        @page { size: A4; margin: 0mm; }
+        body { background-color: #fff; padding: 0; margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .control-panel { display: none !important; }
+        .document-wrapper { overflow: visible; display: block; padding: 0; gap: 0; }
+        .document { box-shadow: none; width: 210mm; height: 297mm; margin: 0; page-break-after: always; }
+        .document:last-child { page-break-after: auto; }
+    }
+</style>
+</head>
+<body>
+
+<!-- Control Panel -->
+<div class="control-panel">
+    <label for="clientInput">১. ক্লায়েন্টের নাম ও ঠিকানা:</label>
+    <textarea id="clientInput" rows="3">Dr Abu Sayeed Rahman
+House: 5, Road: 36,
+Gulshan 2, Dhaka 1212.</textarea>
+
+    <div style="display: flex; gap: 15px;">
+        <div style="flex: 1;">
+            <label for="workNameInput">২. কাজের নাম:</label>
+            <input type="text" id="workNameInput" value="Water Damp Hit Proofing">
+        </div>
+        <div style="flex: 1;">
+            <label for="quoteNoInput">৩. Quotation No:</label>
+            <input type="number" id="quoteNoInput" value="26011">
+        </div>
+    </div>
+
+    <label>৪. রেট এবং পরিমাণ ক্যালকুলেটর (২য় পেজের জন্য):</label>
+    <div style="display: flex; gap: 10px; background: #fff; padding: 10px; border-radius: 5px; border: 1px solid #777;">
+        <select id="rowSelect" onchange="loadRowData()" style="flex: 1.2; border:none; outline:none; background:#f4f4f4;">
+            <option value="1">Row 1 (Roof Prep)</option>
+            <option value="2">Row 2 (Cementitious)</option>
+            <option value="3" selected>Row 3 (Mid Coat)</option>
+            <option value="4">Row 4 (Decreasing Roof)</option>
+            <option value="5">Row 5 (Without designed)</option>
+            <option value="6">Row 6 (Necessary Equip)</option>
+        </select>
+        <input type="text" id="rowNameInput" oninput="saveRowData()" placeholder="Area (e.g. Roof)" style="flex: 1; border: 1px solid #ccc;">
+        <input type="number" id="rowQtyInput" oninput="saveRowData()" placeholder="Qty (e.g. 8500)" style="flex: 1; border: 1px solid #ccc;">
+        <input type="number" id="rowRateInput" oninput="saveRowData()" placeholder="Rate (e.g. 55)" style="flex: 1; border: 1px solid #ccc;">
+    </div>
+    
+    <button class="download-btn" onclick="saveAndPrint()">⬇ Download / Save as PDF</button>
+</div>
+
+<div class="document-wrapper">
+    <!-- ================= PAGE 1 ================= -->
+    <div class="document" id="page-1">
+        <div class="header">
+            <div class="logo-container">
+                <img src="logo.jpg" alt="AWT Logo" class="logo-img">
+                <p class="logo-text">Advanced Waterproof<br>Technology</p>
+            </div>
+            <div class="company-info">
+                LICENSE NO: TRAD/DNCC/041726/2023<br>
+                Advanced WaterProof Technology<br>
+                Head Office: Bypel, Savar, Dhaka-1340<br>
+                Email: advanced.tenchnology133@gmail.com<br>
+                Website: https://awpt.tech<br>
+                Mobile: 01714-633341
+            </div>
+        </div>
+
+        <div class="meta-data">
+            <div class="recipient">
+                To,<br>
+                <span id="clientDisplay">
+                    <b>Dr Abu Sayeed Rahman</b><br>
+                    <b>House: 5, Road: 36,</b><br>
+                    <b>Gulshan 2, Dhaka 1212.</b>
+                </span>
+            </div>
+            <div class="quotation-details">
+                <b><span id="displayQuoteNo">Quotation No: AWT-26011/26</span></b><br>
+                <b>Ref:</b><br>
+                <b><span id="displayDate">Date: </span></b>
+            </div>
+        </div>
+
+        <div class="subject">
+            Subject: Submission of Quotation for <span id="workSubject">Water Damp Hit Proofing</span> Work.
+        </div>
+
+        <div class="body-text">
+            <p>Dear Sir,</p>
+            <p>We Are Very Thankful to for Showing Kind Interest with "<b>Advanced Waterproof Technology</b>" We Have the Pleasure in Submitting the Quotation for the "<b><span id="workBody">Water Damp Hit Proofing</span></b>" Work.</p>
+            <p>We Are Working with the Latest Technology & Quality Full Product Use in Industrial Sector. We Have Already Done Several Projects with Proper Application and Due Time. Please Feel Free to Contact with the Undersigned to Inquire About Any of the Specifics of This Quotation.</p>
+            <p>In This Circumstance, We Hope That Our Quotation Shall Be Treated as Fear and Reasonable in Comparison with the Other Participators.</p>
+        </div>
+
+        <div class="terms-section">
+            <h3>Terms and conditions:</h3>
+            <ul class="terms-list">
+                <li>From Total Bill to Be Paid 60% with Work Order & Goods In-House 30% and the Rest of 10% on Hand Over the Project.</li>
+                <li>At the Time of Commencement of Work at Your Site, You Are Requested to Kindly Provide Uninterrupted Utility Supply to Run the Machineries. the Place of Work Should Be Vacant and Secured to Avoid Any Sort of Violence, Interruption and Damage of Work. If Necessary, the Power Supply May Require to Be Shut Down During the Work in High Voltage Line Areas for Safety Purpose.</li>
+                <li>The Price Offer Excluding to All VAT & Taxes.</li>
+                <li>This Offer is Valid for Acceptance Till <b><span id="displayValidDate"></span></b></li>
+            </ul>
+        </div>
+
+        <div class="footer">
+            Thank You Very Much for Allowing us the Opportunity to Bid for Your Work.
+        </div>
+    </div>
+
+    <!-- ================= PAGE 2 ================= -->
+    <div class="document" id="page-2">
+        <table class="quote-table">
+            <tr>
+                <td style="width: 8%;"></td>
+                <td colspan="4" class="text-red" style="padding:10px;">Water Damp & Heat Proofing Work</td>
+            </tr>
+            <tr>
+                <td colspan="5" class="bg-purple" style="padding:8px;">&nbsp;&nbsp;Name of Building Owner: <span id="page2ClientOwner">Dr Abu Sayeed Rahman</span></td>
+            </tr>
+            <tr>
+                <td colspan="4" style="padding:8px; font-weight:bold;">ATTN: <span id="page2ClientAttn">Dr Abu Sayeed Rahman</span></td>
+                <td style="padding:8px; font-weight:bold; font-size:13px;">Date: <span id="page2Date">01 August, 2026</span></td>
+            </tr>
+            <tr>
+                <th class="bg-purple" style="width:8%; text-align:center;">Sl. No.</th>
+                <th class="bg-purple" style="width:45%; text-align:center;">Description of Goods</th>
+                <th class="bg-purple" style="width:12%; text-align:center;">Quantity</th>
+                <th class="bg-purple" style="width:15%; text-align:center;">Rate<br>(Tk.)</th>
+                <th class="bg-purple" style="width:20%; text-align:center;">Amount (Tk.)</th>
+            </tr>
+            
+            <!-- Row 1 -->
+            <tr>
+                <td style="text-align:center; font-weight:bold;">01.</td>
+                <td>
+                    <span class="bg-yellow">Roof Preparation Working</span><br>
+                    Grawding Clear, Stone Pattern Clear, Crack Solution, Silicon (US), Liquid Resin Fibre (US)
+                </td>
+                <td style="text-align:center; font-weight:bold; vertical-align:middle;" id="row-qty-1"></td>
+                <td style="text-align:center; font-weight:bold; vertical-align:middle;" id="row-rate-1"></td>
+                <td style="text-align:center; font-weight:bold; vertical-align:middle;" id="row-amt-1"></td>
+            </tr>
+            
+            <!-- Row 2 -->
+            <tr>
+                <td style="text-align:center; font-weight:bold;">02.</td>
+                <td style="padding-bottom: 0;">
+                    <span class="bg-yellow">Cementitious Waterproofing Work</span><br>
+                    3 (Three) Layer Acrylic Cementitious Waterproofing Coating.<br>
+                    <div class="inner-sub-row">
+                        <b>Product:</b> Pudifin 2K & Super Latex.<br>
+                        <b>Brand:</b> Dr. Fixit (India)
+                    </div>
+                </td>
+                <td style="text-align:center; font-weight:bold; vertical-align:middle;" id="row-qty-2"></td>
+                <td style="text-align:center; font-weight:bold; vertical-align:middle;" id="row-rate-2"></td>
+                <td style="text-align:center; font-weight:bold; vertical-align:middle;" id="row-amt-2"></td>
+            </tr>
+            
+            <!-- Row 3 -->
+            <tr>
+                <td style="text-align:center; font-weight:bold;">03.</td>
+                <td style="padding-bottom: 0;">
+                    <span class="bg-yellow">Mid Coat (Water Sloping)</span><br>
+                    2 (Three) Layer For (Water Sloping)<br>
+                    <div class="inner-sub-row">
+                        <b>Product:</b> Pudifin 2K, Super Latex,Nitotile MPA,Sand.<br>
+                        <b>Brand:</b> Dr. Fixit (India)
+                    </div>
+                </td>
+                <td style="text-align:center; font-weight:bold; vertical-align:middle;" id="row-qty-3"></td>
+                <td style="text-align:center; font-weight:bold; vertical-align:middle;" id="row-rate-3"></td>
+                <td style="text-align:center; font-weight:bold; vertical-align:middle;" id="row-amt-3"></td>
+            </tr>
+            
+            <!-- Row 4 -->
+            <tr>
+                <td style="text-align:center; font-weight:bold;">04.</td>
+                <td style="padding-bottom: 0;">
+                    <span class="bg-yellow">Decreasing Roof Temperature</span><br>
+                    2 (Two) Layer For (Heat Proofing)<br>
+                    <div class="inner-sub-row">
+                        <b>Product:</b> Roof seal (Acrylate With PU)<br>
+                        <b>Brand:</b> Dr. Fixit (India)
+                    </div>
+                </td>
+                <td style="text-align:center; font-weight:bold; vertical-align:middle;" id="row-qty-4"></td>
+                <td style="text-align:center; font-weight:bold; vertical-align:middle;" id="row-rate-4"></td>
+                <td style="text-align:center; font-weight:bold; vertical-align:middle;" id="row-amt-4"></td>
+            </tr>
+            
+            <!-- Row 5 -->
+            <tr>
+                <td style="text-align:center; font-weight:bold;">05.</td>
+                <td>Without designed roof flooring as per tile design or any other customized design.</td>
+                <td style="text-align:center; font-weight:bold; vertical-align:middle;" id="row-qty-5"></td>
+                <td style="text-align:center; font-weight:bold; vertical-align:middle;" id="row-rate-5"></td>
+                <td style="text-align:center; font-weight:bold; vertical-align:middle;" id="row-amt-5"></td>
+            </tr>
+            
+            <!-- Row 6 -->
+            <tr>
+                <td style="text-align:center; font-weight:bold;">06.</td>
+                <td style="font-weight:bold;">We Will Provide All the Necessary Equipment for the Work.</td>
+                <td style="text-align:center; font-weight:bold; vertical-align:middle;" id="row-qty-6"></td>
+                <td style="text-align:center; font-weight:bold; vertical-align:middle;" id="row-rate-6"></td>
+                <td style="text-align:center; font-weight:bold; vertical-align:middle;" id="row-amt-6"></td>
+            </tr>
+            
+            <!-- Totals -->
+            <tr>
+                <td colspan="4" style="text-align:right; font-weight:bold;">Total Amount</td>
+                <td style="text-align:center; font-weight:bold;" id="total-amount"></td>
+            </tr>
+            <tr>
+                <td colspan="4" style="text-align:right; font-weight:bold;">Transport</td>
+                <td style="text-align:center; font-weight:bold;">N/A</td>
+            </tr>
+            <tr>
+                <td colspan="4" style="text-align:right; font-weight:bold;">Grand Total</td>
+                <td style="text-align:center; font-weight:bold;" id="grand-total"></td>
+            </tr>
+        </table>
+        
+        <!-- In words text -->
+        <div id="amount-in-words" style="font-weight:bold; font-size:15px; margin-top:15px; padding-left:35px; min-height: 20px;"></div>
+        
+        <div style="margin-top:35px; padding: 0 10px; font-weight:bold; font-size:14.5px; text-decoration:underline; text-align:justify; line-height:1.5;">
+            Note: We are currently providing the quotation based on an approximate measurement of <span id="note-qty-display">After measurement</span> square feet as per your Information. However, before starting the work, our technician will conduct a live measurement in your presence. The final bill will be determined according to the final measured area.
+        </div>
+        
+        <div class="footer" style="margin-top:50px;">
+            Thank You Very Much for Allowing us the Opportunity to Bid for Your Work.
+        </div>
+    </div>
+
+    <!-- ================= PAGE 3 ================= -->
+    <div class="document" id="page-3" style="display: flex; flex-direction: column;">
+        <div style="flex-grow: 1; padding: 20px;">
+            <h3 style="text-decoration: underline; font-size: 18px; margin-bottom: 25px;">Warranty:</h3>
+            
+            <p style="font-weight: bold; font-size: 15px; margin-bottom: 15px;">Warranty will be provided for this work as per the agreed terms and period.</p>
+            
+            <p style="font-weight: bold; font-size: 14.5px; line-height: 1.6; text-align: justify; margin-bottom: 50px;">
+                (Note: Above Quoted Prices Are Inclusive of Materials, Labor and Other Relevant Charges and the Total Scope of Work Is Subject to Measurement of Actual Work. Final Bill Should Be as Per Actual Measurement of the Work Done)
+            </p>
+            
+            <p style="font-weight: bold; font-size: 15px; margin-bottom: 0px;">Yours Faithfully,</p>
+            
+            <!-- Signature Image (sg.jpg) -->
+            <img src="sg (1).png" alt="Signature" style="height: 55px; margin-top: -5px; margin-bottom: 0px; margin-left: -5px; display: block; object-fit: contain; mix-blend-mode: multiply;">
+            
+            <p style="font-size: 14.5px; line-height: 1.4; margin: 0;">
+                Eng. Mirza Azad<br>
+                Project Manager<br>
+                Mobile:01714-633341
+            </p>
+        </div>
+        
+        <div class="footer" style="padding-bottom: 30px;">
+            Thank You Very Much for Allowing us the Opportunity to Bid for Your Work.
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- Page 1 & Basic Info Handlers ---
+    const clientInput = document.getElementById('clientInput');
+    const clientDisplay = document.getElementById('clientDisplay');
+    const page2ClientOwner = document.getElementById('page2ClientOwner');
+    const page2ClientAttn = document.getElementById('page2ClientAttn');
+
+    function updateClientNameAndTitle() {
+        const lines = clientInput.value.split('\n');
+        clientDisplay.innerHTML = lines.map(line => `<b>${line}</b>`).join('<br>');
+        const firstLine = lines[0] ? lines[0].replace('To,', '').trim() : '';
+        page2ClientOwner.innerText = firstLine;
+        page2ClientAttn.innerText = firstLine;
+        
+        // ডায়নামিক পেজ টাইটেল আপডেট (PDF ফাইলের নামের জন্য)
+        if (firstLine) {
+            document.title = "Quotation - Advanced Waterproof Technology " + firstLine;
+        } else {
+            document.title = "Quotation - Advanced Waterproof Technology";
+        }
+    }
+
+    clientInput.addEventListener('input', updateClientNameAndTitle);
+
+    const workNameInput = document.getElementById('workNameInput');
+    const workSubject = document.getElementById('workSubject');
+    const workBody = document.getElementById('workBody');
+    workNameInput.addEventListener('input', function() {
+        workSubject.innerText = this.value || "Work Name";
+        workBody.innerText = this.value || "Work Name";
+    });
+
+    const quoteNoInput = document.getElementById('quoteNoInput');
+    const displayQuoteNo = document.getElementById('displayQuoteNo');
+    let savedQuoteNo = localStorage.getItem('awt_last_quote_no') || '26011';
+    quoteNoInput.value = savedQuoteNo;
+    displayQuoteNo.innerText = 'Quotation No: AWT-' + savedQuoteNo + '/26';
+
+    quoteNoInput.addEventListener('input', function() {
+        displayQuoteNo.innerText = 'Quotation No: AWT-' + this.value + '/26';
+    });
+
+    // --- Date Handlers ---
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const today = new Date();
+    const dateString = String(today.getDate()).padStart(2, '0') + ' ' + monthNames[today.getMonth()] + ' ' + today.getFullYear();
+    document.getElementById('displayDate').innerText = 'Date: ' + dateString;
+    document.getElementById('page2Date').innerText = dateString;
+
+    const validDate = new Date(today);
+    validDate.setDate(validDate.getDate() + 30);
+    function getOrdinal(n) {
+        const s = ["th", "st", "nd", "rd"];
+        const v = n % 100;
+        return (s[(v - 20) % 10] || s[v] || s[0]);
+    }
+    const validDateString = validDate.getDate() + "<sup>" + getOrdinal(validDate.getDate()) + "</sup> " + monthNames[validDate.getMonth()] + " " + validDate.getFullYear();
+    document.getElementById('displayValidDate').innerHTML = validDateString;
+
+    // --- Dynamic Table Calculation Logic ---
+    let rowData = {
+        1: { name: '', qty: '', rate: '' },
+        2: { name: '', qty: '', rate: '' },
+        3: { name: '', qty: '', rate: '' }, 
+        4: { name: '', qty: '', rate: '' },
+        5: { name: '', qty: '', rate: '' },
+        6: { name: '', qty: '', rate: '' }
+    };
+
+    const rowSelect = document.getElementById('rowSelect');
+    const rowNameInput = document.getElementById('rowNameInput');
+    const rowQtyInput = document.getElementById('rowQtyInput');
+    const rowRateInput = document.getElementById('rowRateInput');
+
+    function loadRowData() {
+        let rId = rowSelect.value;
+        rowNameInput.value = rowData[rId].name;
+        rowQtyInput.value = rowData[rId].qty;
+        rowRateInput.value = rowData[rId].rate;
+    }
+
+    function saveRowData() {
+        let rId = rowSelect.value;
+        rowData[rId].name = rowNameInput.value;
+        rowData[rId].qty = rowQtyInput.value;
+        rowData[rId].rate = rowRateInput.value;
+        renderTable();
+    }
+
+    function numberToWords(num) {
+        num = Math.round(num);
+        if (num === 0) return "";
+        const a = ['', 'One ', 'Two ', 'Three ', 'Four ', 'Five ', 'Six ', 'Seven ', 'Eight ', 'Nine ', 'Ten ', 'Eleven ', 'Twelve ', 'Thirteen ', 'Fourteen ', 'Fifteen ', 'Sixteen ', 'Seventeen ', 'Eighteen ', 'Nineteen '];
+        const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+
+        function convert(n) {
+            if (n < 20) return a[n];
+            if (n < 100) return b[Math.floor(n / 10)] + (n % 10 !== 0 ? ' ' + a[n % 10] : ' ');
+            if (n < 1000) return a[Math.floor(n / 100)] + 'Hundred ' + (n % 100 !== 0 ? convert(n % 100) : '');
+            if (n < 100000) return convert(Math.floor(n / 1000)) + 'Thousand ' + (n % 1000 !== 0 ? convert(n % 1000) : '');
+            if (n < 10000000) return convert(Math.floor(n / 100000)) + 'Lac ' + (n % 100000 !== 0 ? convert(n % 100000) : '');
+            return convert(Math.floor(n / 10000000)) + 'Crore ' + (n % 10000000 !== 0 ? convert(n % 10000000) : '');
+        }
+        return convert(num).trim() + " Only.";
+    }
+
+    function renderTable() {
+        let totalAmount = 0;
+        let totalQty = 0;
+        let hasQty = false;
+        
+        for (let i = 1; i <= 6; i++) {
+            let n = rowData[i].name;
+            let q = rowData[i].qty;
+            let r = rowData[i].rate;
+            
+            let qtyCell = document.getElementById('row-qty-' + i);
+            let rateCell = document.getElementById('row-rate-' + i);
+            let amtCell = document.getElementById('row-amt-' + i);
+            
+            if (q) {
+                totalQty += parseFloat(q) || 0;
+                hasQty = true;
+            }
+
+            let qtyCellHtml = "";
+            if (n || q) {
+                if (q) {
+                    qtyCellHtml = (n ? n + " =<br>" : "") + q + "<br>SFT (+-)";
+                } else {
+                    qtyCellHtml = (n ? n + "<br>" : "") + "After measurement<br>SFT";
+                }
+            }
+            qtyCell.innerHTML = qtyCellHtml;
+            
+            if (r) {
+                rateCell.innerHTML = `= ${r}/-<br>Per<br>Square<br>Feet`;
+            } else {
+                rateCell.innerHTML = "";
+            }
+            
+            if (r && q) {
+                let amt = parseFloat(q) * parseFloat(r);
+                totalAmount += amt;
+                amtCell.innerHTML = amt.toLocaleString('en-IN') + '/- BDT';
+            } else if (r && !q) {
+                amtCell.innerHTML = '--'; 
+            } else {
+                amtCell.innerHTML = '';
+            }
+        }
+        
+        if (totalAmount > 0) {
+            document.getElementById('total-amount').innerText = totalAmount.toLocaleString('en-IN') + '/-';
+            document.getElementById('grand-total').innerText = totalAmount.toLocaleString('en-IN') + '/-';
+            document.getElementById('amount-in-words').innerText = "In Word: " + numberToWords(totalAmount);
+        } else {
+            document.getElementById('total-amount').innerText = "";
+            document.getElementById('grand-total').innerText = "";
+            document.getElementById('amount-in-words').innerText = "";
+        }
+
+        let noteQtyDisplay = document.getElementById('note-qty-display');
+        if (hasQty && totalQty > 0) {
+            noteQtyDisplay.innerText = totalQty;
+        } else {
+            noteQtyDisplay.innerText = "After measurement";
+        }
+    }
+
+    function saveAndPrint() {
+        updateClientNameAndTitle();
+        window.print();
+        let currentNo = parseInt(quoteNoInput.value);
+        let nextNo = currentNo + 1;
+        localStorage.setItem('awt_last_quote_no', nextNo.toString());
+
+        setTimeout(() => {
+            quoteNoInput.value = nextNo;
+            displayQuoteNo.innerText = 'Quotation No: AWT-' + nextNo + '/26';
+        }, 1000);
+    }
+    
+    updateClientNameAndTitle();
+    loadRowData();
+    renderTable(); 
+
+</script>
+
+</body>
+</html>
