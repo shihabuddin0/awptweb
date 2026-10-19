@@ -238,6 +238,48 @@ function renderCarousel(status, track, emptyEl, badgeEl) {
   if (badgeEl) badgeEl.textContent = toBn(list.length) + 'টি';
 }
 
+/* Count-up animation for stat numbers: 0 -> target with easing.
+   Reads the current text (supports suffixes like +/%, Bengali digits),
+   runs once when the stats panel scrolls into view. */
+function animateCount(el) {
+  const raw = (el.textContent || '').trim();
+  const bnDigits = /[০-৯]/.test(raw);
+  const norm = raw.replace(/[০-৯]/g, (d) => '০১২৩৪৫৬৭৮৯'.indexOf(d));
+  const m = norm.match(/^(\d+)(.*)$/);
+  if (!m) return;
+  const target = parseInt(m[1], 10);
+  const suffix = m[2] || '';
+  const fmt = (n) => (bnDigits ? toBn(n) : String(n)) + suffix;
+  if (typeof requestAnimationFrame !== 'function') { el.textContent = raw; return; }
+  const dur = 1600;
+  let start = null;
+  const step = (now) => {
+    if (start === null) start = now;
+    const p = Math.min((now - start) / dur, 1);
+    const eased = 1 - Math.pow(1 - p, 3);
+    el.textContent = fmt(Math.round(target * eased));
+    if (p < 1) requestAnimationFrame(step);
+    else el.textContent = raw;
+  };
+  requestAnimationFrame(step);
+}
+
+function initStatCountUp() {
+  if (!('IntersectionObserver' in window)) return;
+  const panel = document.querySelector('.stats-panel');
+  if (!panel) return;
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((en) => {
+      if (!en.isIntersecting) return;
+      io.disconnect();
+      if (reduce) return;
+      panel.querySelectorAll('[data-count]').forEach(animateCount);
+    });
+  }, { threshold: 0.25 });
+  io.observe(panel);
+}
+
 /* Section headings (চলমান/সম্পন্ন) are editable from the admin panel.
    Falls back to the built-in defaults when the API is unreachable. */
 async function loadSettingsRemote() {
@@ -377,6 +419,7 @@ function initProjects() {
 
   loadProjectsRemote();
   loadSettingsRemote();
+  initStatCountUp();
 }
 
 /* ---------- init ---------- */

@@ -218,8 +218,8 @@ const DEFAULT_SETTINGS = {
   completed_title: '✅ সম্পন্ন প্রজেক্ট',
   stat1_value: '500+', stat1_label: 'সম্পন্ন প্রজেক্ট',
   stat2_value: '100%', stat2_label: 'সন্তুষ্ট গ্রাহক',
-  stat3_value: '10+', stat3_label: 'বছরের অভিজ্ঞ টিম',
-  stat4_value: '25+', stat4_label: 'বছরের ওয়ারেন্টি',
+  stat3_value: '25+', stat3_label: 'বছরের ওয়ারেন্টি',
+  stat4_value: '10+', stat4_label: 'বছরের অভিজ্ঞ টিম',
 };
 const SETTING_KEYS = Object.keys(DEFAULT_SETTINGS);
 
