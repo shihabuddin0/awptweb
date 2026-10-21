@@ -21,6 +21,7 @@
             flex-direction: column;
             align-items: center;
             padding: 20px;
+            overflow-x: auto;
         }
 
         /* Top Action Buttons */
@@ -70,6 +71,7 @@
             min-height: 290mm;
             display: flex;
             flex-direction: column;
+            flex-shrink: 0;
         }
 
         .receipt-content {
@@ -211,7 +213,7 @@
             font-size: 14px;
             font-weight: 600;
             color: #333;
-            padding: 0 5px 2px 5px; /* Adjusted padding to fix floating text */
+            padding: 0 5px 2px 5px; 
             outline: none;
             background: transparent;
         }
@@ -220,7 +222,7 @@
             border-bottom: 1px solid #0b4e8a;
         }
 
-        /* Hide Up/Down arrows in number input for perfect centering */
+        /* Hide Up/Down arrows in number input */
         input[type="number"]::-webkit-inner-spin-button, 
         input[type="number"]::-webkit-outer-spin-button { 
             -webkit-appearance: none; 
@@ -252,39 +254,87 @@
 
         .info-row {
             display: flex;
-            align-items: baseline; /* Perfectly aligns text and bottom border */
+            align-items: baseline; 
             margin-bottom: 15px;
             font-size: 14px;
             font-weight: 700;
         }
 
         .info-row label {
-            width: 115px; /* Set exact width to reduce the gap */
+            width: 115px; 
             margin-bottom: 0;
         }
 
         .info-row input[type="text"] {
             flex: 1;
-            text-align: left; /* Ensures text starts from the left properly */
+            text-align: left; 
         }
 
-        .payment-method {
-            display: flex;
-            align-items: baseline;
-            
-            font-size: 14px;
-            margin-bottom: 0;
-            font-weight: 600;
-        }
-
-        .payment-method label {
+        /* Phone and Payment Row Fixes */
+        .phone-row {
             display: flex;
             align-items: center;
+            flex-wrap: nowrap;
+            width: 100%;
+            min-width: 0;
         }
 
-        .payment-method input {
-            margin-right: 2px; /* Tighter fit for the radio button */
+        .phone-row > label {
+            flex: 0 0 115px;
+            width: 115px;
+        }
+
+        .phone-row .phone-input {
+            flex: 0 0 150px !important;
+            width: 150px !important;
+            min-width: 0 !important;
+            max-width: 150px !important;
+            margin-right: 10px !important;
+            height: 24px;
+            padding: 2px 5px;
+            color: #333 !important;
+            box-sizing: border-box;
+        }
+
+        .phone-row .payment-method {
+            display: flex;
+            align-items: center;
+            flex: 1;
+            min-width: 0;
+            flex-wrap: nowrap;
+            gap: 5px;
+            white-space: nowrap;
+            font-size: 14px;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .phone-row .payment-method strong {
+            margin-right: 2px;
+        }
+
+        .phone-row .payment-method label {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            margin: 0;
+        }
+
+        .phone-row .payment-method input[type="radio"] {
+            margin: 0;
+            flex-shrink: 0;
             cursor: pointer;
+        }
+
+        .customer-info .info-row > label {
+            flex: 0 0 115px;
+            width: 115px;
+        }
+
+        .customer-info .info-row > input[type="text"] {
+            flex: 1;
+            min-width: 0;
+            margin-right: 0;
         }
 
         /* Table Section */
@@ -340,6 +390,10 @@
         .total-row td:last-child {
             text-align: center;
             color: #333;
+        }
+
+        #table-body td:first-child {
+            font-weight: 700;
         }
 
         /* Footer Section */
@@ -402,164 +456,6 @@
             color: #0b4e8a;
             margin-top: 5px;
         }
-        
-        
-.phone-row {
-    display: flex;
-    align-items: center;
-    flex-wrap: nowrap;
-    gap: 0;
-}
-
-.phone-row > label {
-    flex: 0 0 115px;
-    width: 115px;
-}
-
-
-.phone-row .phone-input {
-    display: block;
-    flex: 1 1 150px;
-    width: 115px;
-    min-width: 115px;
-    height: 24px;
-    padding: 2px 5px;
-    color: #333 !important;
-    background: transparent;
-    border: none;
-    border-bottom: 1px solid #0b4e8a;
-    outline: none;
-    box-sizing: border-box;
-    position: relative;
-    z-index: 1;
-}
-
-.phone-row .phone-input::placeholder {
-    color: #888;
-    opacity: 1;
-}
-
-.phone-row .phone-input:focus {
-    border-bottom-color: #005f9e;
-}
-
-
-.phone-row .payment-method {
-    display: flex;
-    align-items: center;
-    flex-wrap: nowrap;
-    gap: 5px;
-    margin: 0;
-    white-space: nowrap;
-    font-size: 12px;
-}
-
-.phone-row .payment-method strong {
-    margin-right: 2px;
-}
-
-.phone-row .payment-method label {
-    display: inline-flex;
-    align-items: center;
-    gap: 2px;
-    margin: 0;
-}
-
-.phone-row .payment-method input[type="radio"] {
-    margin: 0;
-    flex-shrink: 0;
-}
-
-
-/* Fix Phone and Payment Method Overflow */
-.phone-row {
-    display: flex;
-    align-items: center;
-    flex-wrap: nowrap;
-    width: 100%;
-    min-width: 0;
-}
-
-.phone-row > label {
-    flex: 0 0 65px;
-    width: 65px;
-}
-
-
-.phone-row .phone-input {
-    flex: 1 1 170px !important;
-    width: 170px !important;
-    min-width: 0 !important;
-    max-width: 170px !important;
-    box-sizing: border-box;
-}
-
-
-.phone-row .payment-method {
-    display: flex;
-    align-items: center;
-    flex: 1;
-    min-width: 0;
-    flex-wrap: nowrap;
-    gap: 5px;
-    white-space: nowrap;
-    font-size: 14px;
-}
-
-.phone-row .payment-method strong {
-    margin-right: 2px;
-}
-
-.phone-row .payment-method label {
-    display: inline-flex;
-    align-items: center;
-    gap: 2px;
-    margin: 0;
-}
-
-.phone-row .payment-method input[type="radio"] {
-    margin: 0;
-    flex-shrink: 0;
-}
-
-/* Keep A4 receipt centered on mobile */
-.receipt-wrapper {
-    width: 210mm;
-    max-width: none;
-    flex-shrink: 0;
-}
-
-body {
-    overflow-x: auto;
-}
-
-
-/* Align Name, Address and Phone inputs */
-.customer-info .info-row > label {
-    flex: 0 0 115px;
-    width: 115px;
-}
-
-.customer-info .info-row > input[type="text"] {
-    flex: 1;
-    min-width: 0;
-    margin-right: 0;
-}
-
-/* Keep Phone input starting at the same position */
-.customer-info .phone-row .phone-input {
-    flex: 0 0 150px !important;
-    width: 150px !important;
-    min-width: 0 !important;
-    max-width: 150px !important;
-    margin-right: 10px !important;
-}
-
-
-/* Make SL. No. values bold */
-#table-body td:first-child {
-    font-weight: 700;
-}
 
         /* Print Specific Styles */
         @media print {
@@ -588,11 +484,9 @@ body {
         <button class="action-btn btn-add" onclick="addRow()">
             <i class="fas fa-plus"></i> Add Option
         </button>
-        
-<button class="action-btn" onclick="printReceipt()">
-    <i class="fas fa-print"></i> Print Receipt
-</button>
-
+        <button class="action-btn" onclick="printReceipt()">
+            <i class="fas fa-print"></i> Print Receipt
+        </button>
     </div>
 
     <!-- Receipt Format -->
@@ -619,7 +513,6 @@ body {
             <!-- Meta Info -->
             <div class="receipt-meta-top">
                 <div class="meta-field">Date: <span id="current-date" contenteditable="true" style="outline: none;"></span></div>
-
                 <div class="receipt-title">MONEY RECEIPT</div>
                 <div class="receipt-no">Receipt No: <span id="receipt-no"></span></div>
             </div>
@@ -635,19 +528,18 @@ body {
                     <input type="text" class="full-width" placeholder="Enter Address">
                 </div>
                 
-<div class="info-row phone-row">
-    <label>Phone Number:</label>
-    <input type="text" class="phone-input" placeholder="Enter Phone No">
+                <div class="info-row phone-row">
+                    <label>Phone Number:</label>
+                    <input type="text" class="phone-input" placeholder="Enter Phone No">
 
-    <div class="payment-method">
-        <strong>Payment Method:</strong>
-        <label><input type="radio" name="payment" value="Cash" checked>Cash</label>
-        <label><input type="radio" name="payment" value="Bank">Bank</label>
-        <label><input type="radio" name="payment" value="bKash">bKash</label>
-        <label><input type="radio" name="payment" value="Nagad">Nagad</label>
-    </div>
-</div>
-
+                    <div class="payment-method">
+                        <strong>Payment Method:</strong>
+                        <label><input type="radio" name="payment" value="Cash" checked>Cash</label>
+                        <label><input type="radio" name="payment" value="Bank">Bank</label>
+                        <label><input type="radio" name="payment" value="bKash">bKash</label>
+                        <label><input type="radio" name="payment" value="Nagad">Nagad</label>
+                    </div>
+                </div>
             </div>
 
             <!-- Table -->
@@ -665,14 +557,14 @@ body {
                     <tr>
                         <td>1</td>
                         <td><textarea class="full-width auto-resize" rows="1" oninput="autoResize(this)" placeholder="Enter description">Advance Payment for Waterproofing, Damp Proofing & Heat Proofing Work</textarea></td>
-                        <td><input type="number" class="full-width amount-input" oninput="calculateTotal()" placeholder="0"></td>
+                        <td><input type="text" class="full-width amount-input" oninput="calculateTotal()" onblur="formatInput(this)" onfocus="unformatInput(this)" placeholder="0.00"></td>
                         <td><input type="text" class="full-width"></td>
                     </tr>
                 </tbody>
                 <tfoot>
                     <tr class="total-row">
                         <td colspan="2">Total Amount (BDT):</td>
-                        <td id="total-amount" style="text-align: center; color: #333;">0</td>
+                        <td id="total-amount" style="text-align: center; color: #333;">0.00</td>
                         <td></td>
                     </tr>
                 </tfoot>
@@ -720,17 +612,14 @@ body {
         let rowCount = 1;
         function addRow() {
             rowCount++;
-            let descText = "";
-            if (rowCount === 2) descText = "Advance Payment for Waterproofing, Damp Proofing & Heat Proofing Work";
-            else if (rowCount === 3) descText = "Advance Payment for Waterproofing, Damp Proofing & Heat Proofing Work";
-            else descText = "Advance Payment for Waterproofing, Damp Proofing & Heat Proofing Work";
+            let descText = "Advance Payment for Waterproofing, Damp Proofing & Heat Proofing Work";
 
             const tbody = document.getElementById('table-body');
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${rowCount}</td>
                 <td><textarea class="full-width auto-resize" rows="1" oninput="autoResize(this)" placeholder="Enter description">${descText}</textarea></td>
-                <td><input type="number" class="full-width amount-input" oninput="calculateTotal()" placeholder="0"></td>
+                <td><input type="text" class="full-width amount-input" oninput="calculateTotal()" onblur="formatInput(this)" onfocus="unformatInput(this)" placeholder="0.00"></td>
                 <td><input type="text" class="full-width"></td>
             `;
             tbody.appendChild(tr);
@@ -739,17 +628,36 @@ body {
             if(newTextarea) autoResize(newTextarea);
         }
 
-                function calculateTotal() {
+        function formatInput(input) {
+            if (!input.value) return;
+            let val = parseFloat(input.value.replace(/[^\d.]/g, ''));
+            if (isNaN(val)) {
+                input.value = '';
+                return;
+            }
+            input.value = '৳ ' + val.toLocaleString('en-IN', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+            calculateTotal();
+        }
+
+        function unformatInput(input) {
+            if (!input.value) return;
+            input.value = input.value.replace(/[^\d.]/g, '');
+        }
+
+        function calculateTotal() {
             let total = 0;
             const amounts = document.querySelectorAll('.amount-input');
             amounts.forEach(input => {
-                const val = parseFloat(input.value);
+                let cleanValue = input.value.replace(/[^\d.]/g, '');
+                const val = parseFloat(cleanValue);
                 if (!isNaN(val)) {
                     total += val;
                 }
             });
             
-            // বাংলাদেশি স্টাইলে কমা, শেষে .০০ এবং ৳ চিহ্ন যুক্ত করা
             let formattedTotal = total.toLocaleString('en-IN', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
@@ -763,7 +671,6 @@ body {
                 document.getElementById('amount-in-words').innerText = "";
             }
         }
-
 
         function numberToWords(num) {
             const a = ['','One ','Two ','Three ','Four ', 'Five ','Six ','Seven ','Eight ','Nine ','Ten ','Eleven ','Twelve ','Thirteen ','Fourteen ','Fifteen ','Sixteen ','Seventeen ','Eighteen ','Nineteen '];
@@ -780,41 +687,27 @@ body {
             return str.trim();
         }
         
-        
+        function printReceipt() {
+            const nameInput = document.querySelector('.customer-info .info-row input[placeholder="Enter Name"]');
+            const addressInput = document.querySelector('.customer-info .info-row input[placeholder="Enter Address"]');
 
-function printReceipt() {
-    const nameInput = document.querySelector(
-        '.customer-info .info-row input[placeholder="Enter Name"]'
-    );
+            const customerName = nameInput?.value.trim() || 'Customer';
+            const customerAddress = addressInput?.value.trim() || 'No Address';
 
-    const addressInput = document.querySelector(
-        '.customer-info .info-row input[placeholder="Enter Address"]'
-    );
+            const receiptNo = document.getElementById('receipt-no').innerText.trim();
 
-    const customerName = nameInput?.value.trim() || 'Customer';
-    const customerAddress = addressInput?.value.trim() || 'No Address';
+            const safeName = customerName.replace(/[\\/:*?"<>|]/g, '-');
+            const safeAddress = customerAddress.replace(/[\\/:*?"<>|]/g, '-');
 
-    const receiptNo = document.getElementById('receipt-no')
-        .innerText.trim();
+            const oldTitle = document.title;
+            document.title = `Money Receipt - ${safeName} - ${safeAddress} - ${receiptNo}`;
 
-    const safeName = customerName.replace(/[\\/:*?"<>|]/g, '-');
-    const safeAddress = customerAddress.replace(/[\\/:*?"<>|]/g, '-');
+            window.print();
 
-    const oldTitle = document.title;
-
-    document.title =
-        `Money Receipt - ${safeName} - ${safeAddress} - ${receiptNo}`;
-
-    window.print();
-
-    setTimeout(() => {
-        document.title = oldTitle;
-    }, 1000);
-}
-
-
-
+            setTimeout(() => {
+                document.title = oldTitle;
+            }, 1000);
+        }
     </script>
 </body>
-  </html>
-                                                                                                                                  
+</html>
