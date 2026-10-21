@@ -739,7 +739,7 @@ body {
             if(newTextarea) autoResize(newTextarea);
         }
 
-        function calculateTotal() {
+                function calculateTotal() {
             let total = 0;
             const amounts = document.querySelectorAll('.amount-input');
             amounts.forEach(input => {
@@ -748,7 +748,14 @@ body {
                     total += val;
                 }
             });
-            document.getElementById('total-amount').innerText = total.toLocaleString('en-US');
+            
+            // বাংলাদেশি স্টাইলে কমা, শেষে .০০ এবং ৳ চিহ্ন যুক্ত করা
+            let formattedTotal = total.toLocaleString('en-IN', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+            
+            document.getElementById('total-amount').innerText = '৳ ' + formattedTotal;
             
             if (total > 0) {
                 document.getElementById('amount-in-words').innerText = numberToWords(total) + " Taka Only";
@@ -756,6 +763,7 @@ body {
                 document.getElementById('amount-in-words').innerText = "";
             }
         }
+
 
         function numberToWords(num) {
             const a = ['','One ','Two ','Three ','Four ', 'Five ','Six ','Seven ','Eight ','Nine ','Ten ','Eleven ','Twelve ','Thirteen ','Fourteen ','Fifteen ','Sixteen ','Seventeen ','Eighteen ','Nineteen '];
