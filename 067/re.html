@@ -74,8 +74,9 @@
             flex-shrink: 0;
         }
 
+        /* Removed flex-grow: 1 so it doesn't push signatures to the bottom */
         .receipt-content {
-            flex-grow: 1;
+            width: 100%;
         }
 
         /* Header Section */
@@ -400,7 +401,6 @@
         .amount-words {
             font-size: 14px;
             font-weight: 700;
-            margin-bottom: 40px;
             display: flex;
             align-items: baseline;
         }
@@ -415,6 +415,7 @@
             text-transform: capitalize;
         }
 
+        /* Signatures updated to sit below amount in words */
         .signatures {
             display: flex;
             justify-content: space-between;
